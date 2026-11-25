@@ -253,3 +253,44 @@ td select{padding:5px 8px;border-radius:8px;border:1px solid var(--ln);backgroun
 .wait .box{max-width:460px;display:flex;flex-direction:column;gap:12px;align-items:center}
 .logins td select{max-width:12em}
 html,body{margin:0}
+
+/* ---- Gym look: rubber-floor speckle, steel knurling, plates, heart-rate line, athletic lettering ---- */
+.tv{background-color:#14110f;background-image:radial-gradient(#ffffff0b 1px,transparent 1.4px),radial-gradient(#e8603c0a 1px,transparent 1.4px),radial-gradient(#ffffff07 1px,transparent 1.4px);background-size:9px 9px,13px 13px,17px 17px;background-position:0 0,4px 6px,9px 3px}
+.tv .colh,.tv .tvtop h2,.tv .lrd,.tv .legend,.tv .lr .h,.tv .sph,.tv .spot small,.tv .club,.tv .tot div,.tv .ldr small{font-family:'Barlow Condensed',Inter,sans-serif;text-transform:uppercase;letter-spacing:.06em}
+.tv .colh{font-weight:700;font-style:italic;font-size:clamp(22px,1.9vw,36px)}
+.tv .tvtop h2{font-weight:800;font-style:italic;font-size:clamp(26px,2.3vw,44px);letter-spacing:.04em}
+.tv .tvtop h2 small{font-family:'Barlow Condensed',Inter,sans-serif;font-style:normal;font-weight:600;letter-spacing:.08em;font-size:.5em}
+.tv .tot b,.tv .clock b,.tv .ldr .n,.tv .medal{font-family:'Barlow Condensed',Inter,sans-serif;font-weight:800;font-style:italic}
+.tv .tot b{font-size:clamp(30px,2.8vw,54px)}
+.tv .tot div{font-weight:600;font-size:clamp(13px,1vw,19px)}
+.tv .clock b{font-size:clamp(44px,4.4vw,84px);letter-spacing:.01em}
+.tv .ldr .n{font-size:clamp(30px,2.8vw,54px)}
+.tv .ldr.gold .n{font-size:clamp(40px,4vw,76px)}
+.tv .cc b,.tv .spot b{font-family:'Barlow Condensed',Inter,sans-serif;font-weight:700;letter-spacing:.005em}
+.tv .cc b{font-size:clamp(36px,3.6vw,68px)}
+.tv .cc b.lg{font-size:clamp(30px,3vw,58px)}
+.tv .cc b.xl{font-size:clamp(26px,2.4vw,46px)}
+.tv .spot b{font-size:clamp(36px,3.4vw,66px)}
+.tv .lr .ns{font-family:'Barlow Condensed',Inter,sans-serif;font-weight:700;font-size:clamp(19px,1.7vw,32px)}
+.tv .lrd{font-weight:700;font-style:italic}
+/* steel knurling on the leaderboard and spotlight panels */
+.tv .tvtop{background-image:repeating-linear-gradient(45deg,#ffffff05 0 1px,transparent 1px 6px),repeating-linear-gradient(-45deg,#ffffff05 0 1px,transparent 1px 6px),linear-gradient(90deg,#3a2418,#1f1a17)}
+.tv .spot{background-image:repeating-linear-gradient(45deg,#ffffff06 0 1px,transparent 1px 6px),repeating-linear-gradient(-45deg,#ffffff06 0 1px,transparent 1px 6px),linear-gradient(120deg,#a9583a,#6e3420)}
+/* heart-rate line under the header */
+.ekg{flex-basis:100%;height:clamp(14px,1.3vw,24px);margin:-14px 0 -16px;display:block;overflow:visible}
+.ekg path{fill:none;stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.ekg .base{stroke:#e8603c40}
+.ekg .beat{stroke:#ff8a5c;stroke-dasharray:160 1840;animation:ekg 4s linear infinite;filter:drop-shadow(0 0 4px #ff8a5c)}
+@keyframes ekg{from{stroke-dashoffset:2000}to{stroke-dashoffset:0}}
+/* client cards: faint weight-plate watermark */
+.tv .cc{overflow:hidden}
+.tv .cc::after{content:"";position:absolute;right:-48px;bottom:-48px;width:150px;height:150px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,transparent 0 13%,#ffffff12 14% 20%,transparent 21% 56%,#ffffff0c 57% 61%,transparent 62% 86%,#ffffff10 87% 100%)}
+/* club tags with a weight-plate icon */
+.tv .club{display:inline-flex;align-items:center;gap:8px;padding:4px 14px 4px 6px;font-weight:800;font-style:italic;font-size:clamp(16px,1.3vw,25px);letter-spacing:.08em;background:#0b0a0999!important;color:var(--k)!important;margin-bottom:6px;border-radius:99px}
+.tv .club .plt{width:1.5em;height:1.5em;fill:var(--k);filter:drop-shadow(0 1px 2px #000a)}
+.tv .legend i{border-radius:50%!important;background:radial-gradient(circle,#14110f 0 22%,transparent 23%),var(--k,#888)!important}
+.tv .ldr .n{font-size:clamp(26px,2.3vw,44px)}
+.tv .ldr:not(.gold) b{font-size:clamp(15px,1.3vw,25px)}
+.tv .ldr.gold b{font-family:'Barlow Condensed',Inter,sans-serif;font-weight:800;font-style:italic;font-size:clamp(30px,2.9vw,56px);letter-spacing:.01em}
+.tv .sph{font-size:clamp(13px,1vw,19px)}
