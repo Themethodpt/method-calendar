@@ -1,0 +1,3 @@
+# Never commit real client data
+*.csv
+supabase/import-*.sql
