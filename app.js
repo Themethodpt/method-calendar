@@ -210,7 +210,7 @@ function trainers(){
   <div class="ph" style="border-top:1px solid var(--ln)"><div><h2>Gym TV</h2><p>What the public screen shows for each session.</p></div><span class="sp"></span>
   <select id="tvn" style="padding:8px 12px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);font-size:15px">${[['first','Client first name only'],['full','Client full name'],['none','Trainer only, no client names']].map(([k,l])=>`<option value="${k}" ${S.tvNames===k?'selected':''}>${l}</option>`).join('')}</select><button class="btn" data-go="tv">Open TV display</button></div>
   <form class="form" id="spf" style="align-items:center"><b style="margin-right:4px">Client of the month</b><select id="spc"><option value="">None</option>${S.clients.filter(c=>c.active).sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${c.id}" ${S.spotlight&&S.spotlight.client===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select><input id="spn" placeholder="Why they were picked" value="${esc(S.spotlight?.note||'')}" style="flex:1;min-width:200px"><button class="btn pri">Put on TV</button></form>
-  <p class="note">Badges on the TV are automatic: birthdays, 10th/25th/50th/100th sessions, “New member” for a client’s first two weeks, and streaks of 3+ weeks in a row.</p></div>`;
+  <p class="note">Badges on the TV are automatic: birthdays, 10th/25th/50th/100th sessions, “New member” for a client’s first two weeks, and streaks of 3+ weeks in a row (not shown for 100/200/300 Club members, since the club already shows their commitment).</p></div>`;
 }
 
 function payroll(){
@@ -308,7 +308,7 @@ function tvBadges(s){const out=[];const d=parse(s.date);
   if(MS.includes(s.n))out.push(['star',s.n+'th session','#f5c84c']);
   if(s.since&&d>=parse(s.since)&&(d-parse(s.since))/864e5<=14)out.push(['spark','New member','#6fd8a6']);
   const wks=new Set(s.weeks||[]);let w=satOf(d),n=0;while(wks.has(iso(w))){n++;w=addDays(w,-7)}
-  if(n>=3)out.push(['flame',n+'-week streak','#ff8a4c']);
+  if(n>=3&&tierOf(s.n||0)===0)out.push(['flame',n+'-week streak','#ff8a4c']);
   return out}
 let tvTimer=null;
 async function tvLoad(){
