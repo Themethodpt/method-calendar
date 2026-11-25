@@ -210,6 +210,14 @@ td select{padding:5px 8px;border-radius:8px;border:1px solid var(--ln);backgroun
 .bd svg{width:1.15em;height:1.15em;fill:var(--b);flex:none}
 .lr .ns svg{width:.8em;height:.8em;fill:var(--b)}
 .lrd{font-size:clamp(16px,1.4vw,26px);font-weight:600;color:#f19a72;border-top:1px solid #3a322c;padding-top:10px}
+.spot.auto{position:relative;display:block;padding-top:clamp(30px,2.4vw,44px)}
+.spot .sph{position:absolute;top:clamp(10px,.9vw,16px);left:clamp(14px,1.6vw,28px);font-size:clamp(11px,.8vw,15px);letter-spacing:.12em;color:#ffd9c7b3}
+.spot .spf{display:none;align-items:center;gap:clamp(12px,1.4vw,24px)}
+.spot .spf.on{display:flex;animation:spin .7s ease-out}
+@keyframes spin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.spot .spd{position:absolute;right:clamp(14px,1.6vw,28px);bottom:clamp(10px,.9vw,16px);display:flex;gap:6px}
+.spot .spd i{width:8px;height:8px;border-radius:50%;background:#ffffff40}
+.spot .spd i.on{background:#ffd36b}
 .spot .by{color:#ffd9c7;font-size:clamp(13px,1vw,18px)}
 .later{display:flex;flex-direction:column;gap:10px}
 .lr{display:flex;gap:14px;border-top:1px solid #3a322c;padding-top:10px}

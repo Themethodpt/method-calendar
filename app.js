@@ -209,8 +209,7 @@ function trainers(){
   <form class="form" id="tf"><input id="tn" placeholder="New trainer’s first name" required><button class="btn pri">Add trainer</button></form>
   <div class="ph" style="border-top:1px solid var(--ln)"><div><h2>Gym TV</h2><p>What the public screen shows for each session.</p></div><span class="sp"></span>
   <select id="tvn" style="padding:8px 12px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);font-size:15px">${[['first','Client first name only'],['full','Client full name'],['none','Trainer only, no client names']].map(([k,l])=>`<option value="${k}" ${S.tvNames===k?'selected':''}>${l}</option>`).join('')}</select><button class="btn" data-go="tv">Open TV display</button></div>
-  <form class="form" id="spf" style="align-items:center"><b style="margin-right:4px">Client of the month</b><select id="spc"><option value="">None</option>${S.clients.filter(c=>c.active).sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${c.id}" ${S.spotlight&&S.spotlight.client===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select><input id="spn" placeholder="Why they were picked" value="${esc(S.spotlight?.note||'')}" style="flex:1;min-width:200px"><button class="btn pri">Put on TV</button></form>
-  <p class="note">Badges on the TV are automatic: birthdays, 10th/25th/50th/100th sessions, “New member” for a client’s first two weeks, and streaks of 3+ weeks in a row (not shown for 100/200/300 Club members, since the club already shows their commitment).</p></div>`;
+  <p class="note">Badges on the TV are automatic: birthdays, 10th/25th/50th/100th sessions, “New member” for a client’s first two weeks, and streaks of 3+ weeks in a row (not shown for 100/200/300 Club members, since the club already shows their commitment). The corner box picks up to 4 highlights about clients in the Now and Next columns (birthdays, milestones, new members, close to a club, streaks) and rotates every 8 seconds. Nobody has to pick anything.</p></div>`;
 }
 
 function payroll(){
@@ -303,11 +302,32 @@ function modal(s,pre){
 const ICON={star:'<path d="M12 2l3 6.5 7 .8-5.2 4.8 1.4 7L12 17.6 5.8 21l1.4-7L2 9.3l7-.8z"/>',flame:'<path d="M12 2c1 4 6 6.5 6 12a6 6 0 0 1-12 0c0-3.2 1.8-4.8 2.6-7.3 1.2 1.3 1.9 2.6 1.9 4.6 1.6-2.4 1.9-5.6 1.5-9.3z"/>',cake:'<path d="M11 2.5c-1 1.4-1.2 2.6 0 3.3h2c1.2-.7 1-1.9 0-3.3l-1-1.2zM11 7h2v3h-2zM4 11h16a1 1 0 0 1 1 1v3c-1.4 0-1.4 1.3-3 1.3S16.4 15 15 15s-1.4 1.3-3 1.3S10.4 15 9 15s-1.4 1.3-3 1.3S4.4 15 3 15v-3a1 1 0 0 1 1-1zM3 17c1.6.6 2.6-.6 3-.6s1.4 1.3 3 1.3 1.6-1.3 3-1.3 1.4 1.3 3 1.3 1.6-1.3 3-1.3 1.4 1.2 3 .6v4H3z"/>',spark:'<path d="M12 1.5l2.3 7.2 7.2 2.3-7.2 2.3L12 20.5l-2.3-7.2L2.5 11l7.2-2.3zM19 16l.9 2.4 2.4.9-2.4.9L19 22.6l-.9-2.4-2.4-.9 2.4-.9z"/>'};
 const MS=[10,25,50,75,100,150,200,250,300,400,500];
 const tierOf=n=>n>=300?3:n>=200?2:n>=100?1:0;
+function streakN(s){const wks=new Set(s.weeks||[]);let w=satOf(parse(s.date)),n=0;while(wks.has(iso(w))){n++;w=addDays(w,-7)}return n}
+const isNewOn=s=>{const d=parse(s.date);return!!(s.since&&d>=parse(s.since)&&(d-parse(s.since))/864e5<=14)};
+// Spotlight: automatic facts about the clients on the Now and Next columns. Nobody picks anything.
+// items: [{name, tr (trainer name), n (lifetime sessions incl. this one), st (week streak), isNew, bday}]
+function spotFacts(items){const seen=new Set(),out=[];
+  items.forEach(x=>{if(!x.name||seen.has(x.name+x.tr))return;seen.add(x.name+x.tr);const f=[];const tr=tierOf(x.n);
+    if(x.bday)f.push({s:100,ic:'cake',col:'#ff8fbf',lab:'Happy birthday',line:`Celebrating with ${x.tr} today`});
+    if(MS.includes(x.n))f.push({s:90+x.n/100,ic:'star',col:'#f5c84c',lab:'Milestone today',line:`Session #${x.n}. Way to go!`});
+    if(x.isNew)f.push({s:80,ic:'spark',col:'#6fd8a6',lab:'Welcome to The Method',line:`New member, training with ${x.tr}`});
+    const club=[100,200,300].find(c=>c>x.n);if(club&&club-x.n<=10){const d=club-x.n;f.push({s:70+(10-d),ic:'star',col:club===100?'#5fe0a8':club===200?'#8fb0ff':'#f3cf6a',lab:`Almost ${club} Club`,line:d===1?`One more session and they’re in the ${club} Club!`:`Just ${d} sessions away from the ${club} Club`})}
+    else{const ms=MS.find(m=>m>x.n);if(ms&&ms>=25&&ms-x.n<=3)f.push({s:45,ic:'star',col:'#f5c84c',lab:'Coming up',line:`${ms-x.n===1?'One session':(ms-x.n)+' sessions'} away from session #${ms}`})}
+    if(x.st>=3&&tr===0)f.push({s:55+x.st,ic:'flame',col:'#ff8a4c',lab:'On a streak',line:`${x.st} weeks in a row and counting`});
+    if(tr&&!f.length)f.push({s:20+x.n/100,ic:'star',col:['','#5fe0a8','#8fb0ff','#f3cf6a'][tr],lab:`${tr}00 Club member`,line:`${x.n} sessions with The Method`});
+    if(f.length){f.sort((a,b)=>b.s-a.s);out.push({...f[0],name:x.name})}});
+  out.sort((a,b)=>b.s-a.s);const pick=[],labs=new Set();out.forEach(f=>{const t=f.lab.split(' ')[0];if(pick.length<4&&!labs.has(t)){pick.push(f);labs.add(t)}});
+  out.forEach(f=>{if(pick.length<4&&!pick.includes(f))pick.push(f)});return pick.sort((a,b)=>b.s-a.s)}
+let spotI=0,spotTimer=null;
+function spotHTML(facts){if(!facts.length)return'<div></div>';spotI%=facts.length;
+  return`<div class="spot auto"><small class="sph">ON THE FLOOR RIGHT NOW</small>${facts.map((f,i)=>`<div class="spf ${i===spotI?'on':''}"><svg viewBox="0 0 24 24" style="fill:${f.col}">${ICON[f.ic]}</svg><div><small>${esc(f.lab.toUpperCase())}</small><b>${esc(f.name)}</b><p>${esc(f.line)}</p></div></div>`).join('')}${facts.length>1?`<div class="spd">${facts.map((f,i)=>`<i class="${i===spotI?'on':''}"></i>`).join('')}</div>`:''}</div>`}
+function spotRotate(){clearInterval(spotTimer);spotTimer=setInterval(()=>{const f=[...document.querySelectorAll('.spot .spf')],d=[...document.querySelectorAll('.spot .spd i')];if(f.length<2)return;
+  spotI=(spotI+1)%f.length;f.forEach((x,i)=>x.classList.toggle('on',i===spotI));d.forEach((x,i)=>x.classList.toggle('on',i===spotI))},8000)}
 function tvBadges(s){const out=[];const d=parse(s.date);
   if(s.bday&&s.bday===s.date.slice(5))out.push(['cake','Happy birthday!','#ff8fbf']);
   if(MS.includes(s.n))out.push(['star',s.n+'th session','#f5c84c']);
   if(s.since&&d>=parse(s.since)&&(d-parse(s.since))/864e5<=14)out.push(['spark','New member','#6fd8a6']);
-  const wks=new Set(s.weeks||[]);let w=satOf(d),n=0;while(wks.has(iso(w))){n++;w=addDays(w,-7)}
+  const n=streakN(s);
   if(n>=3&&tierOf(s.n||0)===0)out.push(['flame',n+'-week streak','#ff8a4c']);
   return out}
 let tvTimer=null;
@@ -334,14 +354,14 @@ function tv(){
   const cnt={};today.forEach(s=>cnt[s.trainer]=(cnt[s.trainer]||0)+1);
   const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]||TR(a[0]).name.localeCompare(TR(b[0]).name)).slice(0,3);
   const lead=`<div class="tvtop"><h2>Top trainers today<small>Most sessions on the schedule</small></h2>${top.map(([id,n],i)=>`<div class="ldr ${i?'':'gold'}" style="--m:${['#f0c04a','#cfd3d8','#d98b4e'][i]}"><div class="medal">${i?'':'<svg class="crown" viewBox="0 0 24 16"><path d="M2 14 0 3l6 4 6-7 6 7 6-4-2 11z"/></svg>'}${i+1}</div><b>${i?'':'<small>TOP TRAINER</small>'}${esc(TR(id).name)}</b><div class="n">${n}</div></div>`).join('')}</div>`;
-  const sp=D.spotlight&&D.spotlight.name?D.spotlight:null;
-  const spot=sp?`<div class="spot"><svg viewBox="0 0 24 24" fill="#ffd36b">${ICON.star}</svg><div><small>CLIENT OF THE MONTH</small><b>${esc(sp.name)}</b>${sp.note?`<p>“${esc(sp.note)}”</p>`:''}${sp.by?`<p class="by">Picked by ${esc(sp.by)}</p>`:''}</div></div>`:'<div></div>';
+  const spot=spotHTML(spotFacts(groups.slice(0,2).flatMap(g=>g.list).map(x=>x.name?{name:x.name,tr:TR(x.trainer).name,n:x.n||0,st:streakN(x),isNew:isNewOn(x),bday:!!(x.bday&&x.bday===x.date.slice(5))}:{})));
   app.innerHTML=`<div class="tv"><div class="tvh"><div class="logo" style="color:#f4eee7"><i>M</i><div>THE METHOD<small style="color:#b9aea2">Durham</small></div></div><h1>Today at The Method</h1>
   <div class="tot"><div><b>${D.month_total}</b>sessions this month</div><div><b>${today.length}</b>sessions today</div></div>
   <div class="clock"><b>${now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</b><span>${now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</span></div></div>
   <div class="tvmid">${lead}${spot}</div>
   <div class="tvcols">${groups.length?col(groups[0],0)+col(groups[1],1)+later:'<div class="wrapup">That’s a wrap. No more sessions booked for today or tomorrow.</div>'}</div></div>
   <button class="btn sm tvx" data-act="exittv">Exit TV</button>`;
+  spotRotate();
 }
 
 // ---------- events ----------
@@ -392,7 +412,6 @@ app.addEventListener('submit',async e=>{e.preventDefault();const f=e.target;cons
     }catch(err){authErr=err.message==='Invalid login credentials'?'That email and password don’t match.':(err.message||String(err))}
     return render()}
   if(f.id==='cf'){const n=val('cn');if(!n)return;return act(()=>q(sb.from('clients').insert({...splitName(n),trainer_id:val('ct')||null,birthday:parseBday(val('cb')),member_since:iso(new Date())})),'Client added')}
-  if(f.id==='spf'){const c=val('spc');return act(()=>q(sb.from('settings').upsert({key:'spotlight',value:c?{client:c,note:val('spn'),by:U.name}:null})),'Client of the month updated')}
   if(f.id==='tf'){const n=val('tn');if(!n)return;return act(()=>q(sb.from('trainers').insert({name:n,color:COLORS[S.trainers.length%COLORS.length]})),'Trainer added')}
 });
 app.addEventListener('change',e=>{const t=e.target;
