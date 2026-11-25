@@ -309,12 +309,12 @@ const isNewOn=s=>{const d=parse(s.date);return!!(s.since&&d>=parse(s.since)&&(d-
 function spotFacts(items){const seen=new Set(),out=[];
   items.forEach(x=>{if(!x.name||seen.has(x.name+x.tr))return;seen.add(x.name+x.tr);const f=[];const tr=tierOf(x.n);
     if(x.bday)f.push({s:100,ic:'cake',col:'#ff8fbf',lab:'Happy birthday',line:`Celebrating with ${x.tr} today`});
-    if(MS.includes(x.n))f.push({s:90+x.n/100,ic:'bell',col:'#f5c84c',lab:'Milestone today',line:`Session #${x.n}. Way to go!`});
+    if(MS.includes(x.n))f.push({s:90+x.n/100,ic:'star',col:'#f5c84c',lab:'Milestone today',line:`Session #${x.n}. Way to go!`});
     if(x.isNew)f.push({s:80,ic:'kb',col:'#6fd8a6',lab:'Welcome to The Method',line:`New member, training with ${x.tr}`});
-    const club=[100,200,300].find(c=>c>x.n);if(club&&club-x.n<=10){const d=club-x.n;f.push({s:70+(10-d),ic:'plate',col:club===100?'#5fe0a8':club===200?'#8fb0ff':'#f3cf6a',lab:`Almost ${club} Club`,line:d===1?`One more session and they’re in the ${club} Club!`:`Just ${d} sessions away from the ${club} Club`})}
-    else{const ms=MS.find(m=>m>x.n);if(ms&&ms>=25&&ms-x.n<=3)f.push({s:45,ic:'bell',col:'#f5c84c',lab:'Coming up',line:`${ms-x.n===1?'One session':(ms-x.n)+' sessions'} away from session #${ms}`})}
+    const club=[100,200,300].find(c=>c>x.n);if(club&&club-x.n<=10){const d=club-x.n;f.push({s:70+(10-d),ic:'star',col:club===100?'#5fe0a8':club===200?'#8fb0ff':'#f3cf6a',lab:`Almost ${club} Club`,line:d===1?`One more session and they’re in the ${club} Club!`:`Just ${d} sessions away from the ${club} Club`})}
+    else{const ms=MS.find(m=>m>x.n);if(ms&&ms>=25&&ms-x.n<=3)f.push({s:45,ic:'star',col:'#f5c84c',lab:'Coming up',line:`${ms-x.n===1?'One session':(ms-x.n)+' sessions'} away from session #${ms}`})}
     if(x.st>=3&&tr===0)f.push({s:55+x.st,ic:'flame',col:'#ff8a4c',lab:'On a streak',line:`${x.st} weeks in a row and counting`});
-    if(tr&&!f.length)f.push({s:20+x.n/100,ic:'plate',col:['','#5fe0a8','#8fb0ff','#f3cf6a'][tr],lab:`${tr}00 Club member`,line:`${x.n} sessions with The Method`});
+    if(tr&&!f.length)f.push({s:20+x.n/100,ic:'star',col:['','#5fe0a8','#8fb0ff','#f3cf6a'][tr],lab:`${tr}00 Club member`,line:`${x.n} sessions with The Method`});
     if(f.length){f.sort((a,b)=>b.s-a.s);out.push({...f[0],name:x.name})}});
   out.sort((a,b)=>b.s-a.s);const pick=[],labs=new Set();out.forEach(f=>{const t=f.lab.split(' ')[0];if(pick.length<4&&!labs.has(t)){pick.push(f);labs.add(t)}});
   out.forEach(f=>{if(pick.length<4&&!pick.includes(f))pick.push(f)});return pick.sort((a,b)=>b.s-a.s)}
@@ -325,7 +325,7 @@ function spotRotate(){clearInterval(spotTimer);spotTimer=setInterval(()=>{const 
   spotI=(spotI+1)%f.length;f.forEach((x,i)=>x.classList.toggle('on',i===spotI));d.forEach((x,i)=>x.classList.toggle('on',i===spotI))},8000)}
 function tvBadges(s){const out=[];const d=parse(s.date);
   if(s.bday&&s.bday===s.date.slice(5))out.push(['cake','Happy birthday!','#ff8fbf']);
-  if(MS.includes(s.n))out.push(['bell',s.n+'th session','#f5c84c']);
+  if(MS.includes(s.n))out.push(['star',s.n+'th session','#f5c84c']);
   if(s.since&&d>=parse(s.since)&&(d-parse(s.since))/864e5<=14)out.push(['kb','New member','#6fd8a6']);
   const n=streakN(s);
   if(n>=3&&tierOf(s.n||0)===0)out.push(['flame',n+'-week streak','#ff8a4c']);
@@ -346,18 +346,18 @@ function tv(){
   const groups=[];up.forEach(s=>{const g=groups.find(g=>g.date===s.date&&g.hour===s.hour);g?g.list.push(s):groups.push({date:s.date,hour:s.hour,list:[s]})});
   const lab=(g,i)=>g.date===tm?(i===0||groups[i-1].date!==tm?'Tomorrow · ':'')+hh(g.hour).replace(':00 ',' '):hh(g.hour).replace(':00 ',' ');
   const card=s=>{const t=TR(s.trainer),n=s.name,b=n?tvBadges(s):[];const tr=n?tierOf(s.n):0;const label=n||t.name;
-    return`<div class="cc ${tr?'t'+tr:''}" style="--c:${t.color}">${tr?`<em class="club" style="--k:${['','#5fe0a8','#8fb0ff','#f3cf6a'][tr]}"><svg class="plt" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 1a11 11 0 1 1 0 22 11 11 0 0 1 0-22zm0 8.6a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8zM12 3.6A8.4 8.4 0 0 0 3.6 12h1.8A6.6 6.6 0 0 1 12 5.4z"/></svg>${tr}00 Club</em>`:''}<b class="${label.length>12?'xl':label.length>8?'lg':''}">${esc(label)}</b>${n?`<span>w/ ${esc(t.name)}</span>`:''}${b.length?`<div class="bdg">${b.map(([ic,tx,col],j)=>`<span class="bd" style="--b:${col};--d:${((s.hour*7+j*5+s.i)%9)*.3}s"><svg viewBox="0 0 24 24">${ICON[ic]}</svg>${tx}</span>`).join('')}</div>`:''}</div>`};
+    return`<div class="cc ${tr?'t'+tr:''}" style="--c:${t.color}">${tr?`<em class="club">${tr}00 Club</em>`:''}<b class="${label.length>12?'xl':label.length>8?'lg':''}">${esc(label)}</b>${n?`<span>w/ ${esc(t.name)}</span>`:''}${b.length?`<div class="bdg">${b.map(([ic,tx,col],j)=>`<span class="bd" style="--b:${col};--d:${((s.hour*7+j*5+s.i)%9)*.3}s"><svg viewBox="0 0 24 24">${ICON[ic]}</svg>${tx}</span>`).join('')}</div>`:''}</div>`};
   const col=(g,i)=>{if(!g)return'<div class="col"></div>';const live=g.date===k&&g.hour===hNow;
     return`<div class="col ${g.list.length>4?'many':''}"><div class="colh ${live?'live':''}">${live?'<span class="pulse"></span>Training now · ':i===0?'Up next · ':'Then · '}${lab(g,i)}</div><div class="cards">${g.list.map(card).join('')}</div></div>`};
   const rest=groups.slice(2,8);
-  const later=`<div class="col"><div class="colh">Later</div><div class="legend"><span><i style="--k:#5fe0a8"></i>100 Club</span><span><i style="--k:#8fb0ff"></i>200 Club</span><span><i style="--k:#f3cf6a"></i>300 Club</span></div><div class="later">${rest.length?rest.map((g,j)=>`${g.date===tm&&(j===0?groups[1].date!==tm:rest[j-1].date!==tm)?'<div class="lrd">Tomorrow</div>':''}<div class="lr"><div class="h">${hh(g.hour).replace(':00 ',' ')}</div><div class="ns">${g.list.map(s=>`<span class="${s.name?'k'+tierOf(s.n):''}" style="--c:${TR(s.trainer).color}"><i></i>${esc(s.name||TR(s.trainer).name)}${s.name?tvBadges(s).map(([ic,,c])=>`<svg viewBox="0 0 24 24" style="--b:${c}">${ICON[ic]}</svg>`).join(''):''}</span>`).join('')}</div></div>`).join(''):'<div class="muted" style="font-size:22px">Nothing else booked yet.</div>'}</div></div>`;
+  const later=`<div class="col"><div class="colh">Later</div><div class="legend"><span><i style="background:#1d7a58"></i>100 Club</span><span><i style="background:#3561d8"></i>200 Club</span><span><i style="background:#c9952a"></i>300 Club</span></div><div class="later">${rest.length?rest.map((g,j)=>`${g.date===tm&&(j===0?groups[1].date!==tm:rest[j-1].date!==tm)?'<div class="lrd">Tomorrow</div>':''}<div class="lr"><div class="h">${hh(g.hour).replace(':00 ',' ')}</div><div class="ns">${g.list.map(s=>`<span class="${s.name?'k'+tierOf(s.n):''}" style="--c:${TR(s.trainer).color}"><i></i>${esc(s.name||TR(s.trainer).name)}${s.name?tvBadges(s).map(([ic,,c])=>`<svg viewBox="0 0 24 24" style="--b:${c}">${ICON[ic]}</svg>`).join(''):''}</span>`).join('')}</div></div>`).join(''):'<div class="muted" style="font-size:22px">Nothing else booked yet.</div>'}</div></div>`;
   const cnt={};today.forEach(s=>cnt[s.trainer]=(cnt[s.trainer]||0)+1);
   const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]||TR(a[0]).name.localeCompare(TR(b[0]).name)).slice(0,3);
   const lead=`<div class="tvtop"><h2>Top trainers today<small>Most sessions on the schedule</small></h2>${top.map(([id,n],i)=>`<div class="ldr ${i?'':'gold'}" style="--m:${['#f0c04a','#cfd3d8','#d98b4e'][i]}"><div class="medal">${i?'':'<svg class="crown" viewBox="0 0 24 16"><path d="M2 14 0 3l6 4 6-7 6 7 6-4-2 11z"/></svg>'}${i+1}</div><b>${i?'':'<small>TOP TRAINER</small>'}${esc(TR(id).name)}</b><div class="n">${n}</div></div>`).join('')}</div>`;
   const spot=spotHTML(spotFacts(groups.slice(0,2).flatMap(g=>g.list).map(x=>x.name?{name:x.name,tr:TR(x.trainer).name,n:x.n||0,st:streakN(x),isNew:isNewOn(x),bday:!!(x.bday&&x.bday===x.date.slice(5))}:{})));
   app.innerHTML=`<div class="tv"><div class="tvh"><div class="logo" style="color:#f4eee7"><i>M</i><div>THE METHOD<small style="color:#b9aea2">Durham</small></div></div><h1>Today at The Method</h1>
   <div class="tot"><div><b>${D.month_total}</b>sessions this month</div><div><b>${today.length}</b>sessions today</div></div>
-  <div class="clock"><b>${now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</b><span>${now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</span></div><svg class="ekg" viewBox="0 0 2000 40" preserveAspectRatio="none"><path class="base" d="M0 24H560l14-4 10 4h22l10-20 14 34 12-26 10 12h34l12-6 12 6H1240l14-4 10 4h22l10-20 14 34 12-26 10 12h34l12-6 12 6H2000"/><path class="beat" d="M0 24H560l14-4 10 4h22l10-20 14 34 12-26 10 12h34l12-6 12 6H1240l14-4 10 4h22l10-20 14 34 12-26 10 12h34l12-6 12 6H2000"/></svg></div>
+  <div class="clock"><b>${now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</b><span>${now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</span></div></div>
   <div class="tvmid">${lead}${spot}</div>
   <div class="tvcols">${groups.length?col(groups[0],0)+col(groups[1],1)+later:'<div class="wrapup">That’s a wrap. No more sessions booked for today or tomorrow.</div>'}</div></div>
   <button class="btn sm tvx" data-act="exittv">Exit TV</button>`;
