@@ -347,8 +347,10 @@ const FIGS=(()=>{const A=(attr,a,b,d)=>`<animate attributeName="${attr}" values=
   press:d=>`<g>${T('0 0','0 -12',d)}<path d="M7 15H41"/><rect x="7" y="10" width="3.5" height="10" rx="1" class="pl"/><rect x="37.5" y="10" width="3.5" height="10" rx="1" class="pl"/></g>${H(24,12,24,12,d)}${P('M14 15L15 23L24 18L33 23L34 15M24 18L24 33M24 33L20 46M24 33L28 46','M14 3L15 11L24 18L33 11L34 3M24 18L24 33M24 33L20 46M24 33L28 46',d)}`,
   pullup:d=>`<path d="M6 10H42"/>${H(24,19,24,4,d)}${P('M16 10L19 17L24 24L29 17L32 10M24 24L24 35M24 35L22 46M24 35L26 46','M16 10L12 15L24 13L36 15L32 10M24 13L24 25M24 25L22 36M24 25L26 36',d)}`,
   pushup:d=>`<path d="M3 44H45" class="fl"/>${H(9,26,8,35,d)}${P('M13 43L13 36L13 29M13 29L27 36L42 43','M13 43L19 40L13 37M13 37L27 40L42 43',d)}`,
-  swing:d=>`<g>${T('23 37','37 13',d)}<circle cx="0" cy="3" r="3.6" class="pl"/></g>${H(34,18,22,6,d)}${P('M30 22L24 36M30 22L16 30M16 30L20 38L21 46M16 30L24 38L25 46','M22 11L37 12M22 11L22 27M22 27L22 37L21 46M22 27L25 37L25 46',d)}`}})();
-const FIGK=['squat','press','pullup','pushup','swing'];
+  swing:d=>`<g>${T('23 37','37 13',d)}<circle cx="0" cy="3" r="3.6" class="pl"/></g>${H(34,18,22,6,d)}${P('M30 22L24 36M30 22L16 30M16 30L20 38L21 46M16 30L24 38L25 46','M22 11L37 12M22 11L22 27M22 27L22 37L21 46M22 27L25 37L25 46',d)}`,
+  lunge:d=>`${H(24,7,24,15,d)}${P('M24 13L25 25M24 12L24 27M24 27L29 36L33 46M24 27L18 36L12 46','M24 21L25 33M24 20L24 35M24 35L33 35L33 46M24 35L18 44L12 46',d)}<path d="M6 46.5H42" class="fl"/>`,
+  curl:d=>`${H(24,8,24,8,d)}<path d="M24 13L24 30M24 30L20 46M24 30L28 46"/>${P('M24 14L16 22L14 31M24 14L32 22L34 31','M24 14L16 22L15 13M24 14L32 22L33 13',d)}<g>${T('14 32','15 12',d)}<path d=\"M-3 0H3\"/><rect x=\"-5\" y=\"-2.8\" width=\"2.4\" height=\"5.6\" rx=\".8\" class=\"pl\"/><rect x=\"2.6\" y=\"-2.8\" width=\"2.4\" height=\"5.6\" rx=\".8\" class=\"pl\"/></g><g>${T('34 32','33 12',d)}<path d=\"M-3 0H3\"/><rect x=\"-5\" y=\"-2.8\" width=\"2.4\" height=\"5.6\" rx=\".8\" class=\"pl\"/><rect x=\"2.6\" y=\"-2.8\" width=\"2.4\" height=\"5.6\" rx=\".8\" class=\"pl\"/></g>`}})();
+const FIGK=['squat','press','pullup','pushup','swing','lunge','curl'];
 function figFor(key){let h=0;for(const ch of String(key))h=(h*31+ch.charCodeAt(0))>>>0;const k=FIGK[h%FIGK.length];
   return`<svg class="fig" viewBox="0 0 48 48" aria-hidden="true">${FIGS[k]('-'+((h>>4)%18)/10+'s')}</svg>`}
 function tv(){
