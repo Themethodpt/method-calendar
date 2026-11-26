@@ -327,10 +327,13 @@ function spotFacts(items){const seen=new Set(),out=[];
 let spotI=0,spotTimer=null;
 const petOK=p=>p&&p.name&&typeof p.photo==='string'&&/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/.test(p.photo);
 // Method Mascots: the top box rotates through pets of clients in the Now and Next columns.
+// Warm ways to tie a pet to its person; mixed so neighbours on screen differ.
+const PET_LINES=[n=>n+'’s biggest fan',n=>'Cheering on '+n,n=>n+'’s training buddy',n=>n+'’s best friend',n=>n+'’s sidekick'];
+const petLine=(n,i)=>PET_LINES[(i+new Date().getHours())%PET_LINES.length](n);
 function mascotHTML(pets){
   if(!pets.length)return`<div class="spot auto"><small class="sph">METHOD MASCOTS</small><div class="spf on"><svg viewBox="0 0 24 24" style="fill:#ffd36b">${ICON.paw}</svg><div><small>MEET THE PACK</small><b>Method Mascots</b><p>Send us a photo of your pet’s face to see them up here!</p></div></div></div>`;
   spotI%=pets.length;
-  return`<div class="spot auto"><small class="sph">METHOD MASCOTS</small>${pets.map((p,i)=>`<div class="spf ${i===spotI?'on':''}"><img class="petimg" src="${esc(p.photo)}" alt=""><div>${p.type?`<small>${esc(p.type.toUpperCase())}</small>`:''}<b>${esc(p.name)}</b><p>belongs to ${esc(p.owner)}</p></div></div>`).join('')}${pets.length>1?`<div class="spd">${pets.map((p,i)=>`<i class="${i===spotI?'on':''}"></i>`).join('')}</div>`:''}</div>`}
+  return`<div class="spot auto"><small class="sph">METHOD MASCOTS</small>${pets.map((p,i)=>`<div class="spf ${i===spotI?'on':''}"><img class="petimg" src="${esc(p.photo)}" alt=""><div>${p.type?`<small>${esc(p.type.toUpperCase())}</small>`:''}<b>${esc(p.name)}</b><p>${esc(petLine(p.owner,i))}</p></div></div>`).join('')}${pets.length>1?`<div class="spd">${pets.map((p,i)=>`<i class="${i===spotI?'on':''}"></i>`).join('')}</div>`:''}</div>`}
 function spotRotate(){clearInterval(spotTimer);spotTimer=setInterval(()=>{const f=[...document.querySelectorAll('.spot .spf')],d=[...document.querySelectorAll('.spot .spd i')];if(f.length<2)return;
   spotI=(spotI+1)%f.length;f.forEach((x,i)=>x.classList.toggle('on',i===spotI));d.forEach((x,i)=>x.classList.toggle('on',i===spotI))},8000)}
 function tvBadges(s){const out=[];const d=parse(s.date);
