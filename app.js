@@ -327,26 +327,12 @@ function spotFacts(items){const seen=new Set(),out=[];
 let spotI=0,spotTimer=null;
 const petOK=p=>p&&p.name&&typeof p.photo==='string'&&/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/.test(p.photo);
 // Method Mascots: the top box rotates through pets of clients in the Now and Next columns.
-// Decorative walking dog and cat (same line style as the workout figures) on the right of the Method Mascots box.
-const MASCOT_DECO=(()=>{const A=(a,b,d,t)=>`<animate attributeName="d" values="${a};${b};${a}" dur="${t||'.8s'}" begin="${d}" repeatCount="indefinite"/>`;
-  const P=(a,b,d,t,c)=>`<path${c?` class="${c}"`:''} d="${a}">${A(a,b,d,t)}</path>`;
-  const dog=`<g class="pet"><g class="bob">`+
-    `<path class="fillc" d="M13 19Q14 15 20 15L34 15Q40 15 40 20Q40 25 34 25L20 25Q13 25 13 19Z"/>`+
-    `<path class="fillc" d="M33 16L40 9Q42 6 46 6L49 6Q52 6 53 9L57 11Q59 12 58 14Q57 16 54 16L49 16L45 20Q41 25 33 24Z"/>`+
-    `<path class="ear" d="M45 7Q41 8 42 15Q45 14 47 9Z"/>`+
-    `<circle class="eye" cx="50" cy="10" r="1.2"/><circle class="nose" cx="57.6" cy="12.4" r="1.3"/>`+
-    `</g>`+
-    P('M36 23L38 34M32 23L30 34M19 23L17 34M16 22L19 34','M36 23L33 34M32 23L35 34M19 23L22 34M16 22L13 34','0s')+
-    P('M14 18Q9 14 9 7','M14 18Q6 16 4 10','0s','.4s')+`</g>`;
-  const cat=`<g class="pet" transform="translate(66 0)"><g class="bob2">`+
-    `<path class="fillc" d="M14 21Q15 17 21 17L34 17Q39 17 39 21Q39 25 34 25L21 25Q14 25 14 21Z"/>`+
-    `<path class="fillc" d="M33 18L40 14Q40 9 45 9Q50 9 50 14Q50 19 45 19L42 21Q39 25 33 24Z"/>`+
-    `<path class="fillc" d="M41 11.5L41.5 5L45 9.5ZM49 11.5L48.5 5L45 9.5Z"/>`+
-    `<circle class="eye" cx="47" cy="13.5" r="1"/>`+
-    `</g>`+
-    P('M35 23L36 34M32 23L31 34M19 23L18 34M17 22L19 34','M35 23L33 34M32 23L34 34M19 23L21 34M17 22L15 34','-.3s','.9s')+
-    P('M15 20Q7 20 6 13Q5 7 10 5','M15 20Q6 18 7 11Q8 5 13 5','-.3s','1.8s')+`</g>`;
-  return`<svg class="deco" viewBox="0 0 126 40" aria-hidden="true">${dog}${cat}</svg>`})();
+// Decorative paw-in-heart mark on the right of the Method Mascots box (gentle heartbeat).
+const MASCOT_DECO=(()=>{const C=(x,y,rx,ry)=>`M${x-rx} ${y}a${rx} ${ry} 0 1 0 ${2*rx} 0a${rx} ${ry} 0 1 0 ${-2*rx} 0Z`;
+  const heart='M50 88C21 67 5 51 5 30C5 15 16 5 29 5C38 5 46 10 50 18C54 10 62 5 71 5C84 5 95 15 95 30C95 51 79 67 50 88Z';
+  const pad='M50 45C58 45 66 54 66 61C66 67 61 68 57 67C54 66 52 65 50 65C48 65 46 66 43 67C39 68 34 67 34 61C34 54 42 45 50 45Z';
+  const toes=C(33.5,41,5.2,6.4)+C(43.5,31.5,5.4,6.8)+C(56.5,31.5,5.4,6.8)+C(66.5,41,5.2,6.4);
+  return`<svg class="deco" viewBox="0 0 100 92" aria-hidden="true"><path fill-rule="evenodd" d="${heart}${pad}${toes}"/></svg>`})();
 // Warm ways to tie a pet to its person; mixed so neighbours on screen differ.
 const PET_LINES=[n=>n+'’s biggest fan',n=>'Cheering on '+n,n=>n+'’s training buddy',n=>n+'’s best friend',n=>n+'’s sidekick'];
 const petLine=(n,i)=>PET_LINES[(i+new Date().getHours())%PET_LINES.length](n);

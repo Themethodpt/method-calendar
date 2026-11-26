@@ -314,10 +314,5 @@ html,body{margin:0}
 .spot .petimg{width:clamp(84px,7.2vw,140px);height:clamp(84px,7.2vw,140px)}
 .spot.auto{padding-top:clamp(40px,3.1vw,58px)}
 .spot .sph{top:clamp(12px,1vw,18px)}
-.spot .deco{position:absolute;right:clamp(16px,1.8vw,34px);top:50%;transform:translateY(-40%);width:clamp(150px,12.5vw,240px);height:auto;pointer-events:none;fill:none;stroke:#ffd9c7;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
-.spot .deco .fillc{fill:#ffd9c7;stroke:#ffd9c7;stroke-width:1}
-.spot .deco .ear{fill:#e9b8a0;stroke:#e9b8a0;stroke-width:1}
-.spot .deco .eye,.spot .deco .nose{fill:#7a3a22;stroke:none}
-.spot .deco .bob{animation:decoBob .4s ease-in-out infinite alternate}
-.spot .deco .bob2{animation:decoBob .45s ease-in-out infinite alternate}
-@keyframes decoBob{to{transform:translateY(.6px)}}
+.spot .deco{position:absolute;right:clamp(22px,2.4vw,46px);top:50%;margin-top:clamp(-46px,-2.6vw,-26px);width:clamp(78px,6.2vw,120px);height:auto;pointer-events:none;fill:#ffd9c7;opacity:.85;filter:drop-shadow(0 4px 14px rgba(0,0,0,.18));transform-origin:50% 55%;animation:decoBeat 2.8s ease-in-out infinite}
+@keyframes decoBeat{0%,40%,100%{transform:scale(1)}10%{transform:scale(1.07)}20%{transform:scale(1)}30%{transform:scale(1.04)}}
