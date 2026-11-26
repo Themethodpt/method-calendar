@@ -284,3 +284,6 @@ html,body{margin:0}
 .tv .many .cc b.lg{font-size:clamp(26px,2.4vw,46px)}
 .tv .many .cc b.xl{font-size:clamp(20px,1.9vw,36px)}
 .tv .many .cc .fig{width:clamp(48px,4vw,76px);height:clamp(48px,4vw,76px)}
+/* soft divider between the two hour columns */
+.tv .tvcols{gap:clamp(14px,1.5vw,28px)}
+.tv .tvcols>.col+.col{padding-left:clamp(14px,1.5vw,28px);background:linear-gradient(180deg,#f19a7200,#f19a7270 10%,#f19a7245 85%,#f19a7200) left top/2px 100% no-repeat}
