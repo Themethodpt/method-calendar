@@ -327,13 +327,17 @@ function spotFacts(items){const seen=new Set(),out=[];
 let spotI=0,spotTimer=null;
 const petOK=p=>p&&p.name&&typeof p.photo==='string'&&/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/.test(p.photo);
 // Method Mascots: the top box rotates through pets of clients in the Now and Next columns.
+// Decorative cat and paw prints on the right of the Method Mascots box.
+const MASCOT_DECO=(()=>{const paw=(x,y,r,o)=>`<g transform="translate(${x} ${y}) rotate(${r}) scale(1.5)" opacity="${o}"><path d="M12 13c-3.2 0-6.2 3-6.2 5.6 0 1.7 1.3 2.6 3 2.6 1.3 0 2.1-.7 3.2-.7s1.9.7 3.2.7c1.7 0 3-.9 3-2.6C18.2 16 15.2 13 12 13zM6.2 12.2c1.3-.4 1.9-2.1 1.3-3.8S5.6 5.7 4.3 6.1 2.4 8.2 3 9.9s1.9 2.7 3.2 2.3zM10 8.6c1.4-.2 2.2-1.9 1.9-3.7S10.3 2 8.9 2.2 6.7 4.1 7 5.9s1.6 2.9 3 2.7zM17.8 12.2c1.3.4 2.6-.6 3.2-2.3s-.1-3.4-1.3-3.8-2.6.6-3.2 2.3-.1 3.4 1.3 3.8zM14 8.6c1.4.2 2.7-1 3-2.7s-.5-3.5-1.9-3.7-2.7 1-3 2.7.5 3.5 1.9 3.7z"/></g>`;
+  return`<svg class="deco" viewBox="0 0 250 130" aria-hidden="true">${paw(18,92,62,.35)+paw(58,58,50,.45)+paw(92,90,66,.55)+paw(134,54,52,.65)}
+  <g transform="translate(168 8) scale(1.55)"><path d="M14 4l4 7.5q4-1.2 8 0L30 4l1.6 10.5q2.4 3.4 1.2 8Q42 30 42 44q0 10-8 12H14q-5 0-5-5t4.5-5.5Q5 37 13 24q-1.5-5 .6-9.5z" class="cat"/><path d="M34 56q14 0 14-12 0-6-5-7" class="tail"/><circle cx="18.5" cy="17" r="1.6" class="eye"/><circle cx="26.5" cy="17" r="1.6" class="eye"/></g></svg>`})();
 // Warm ways to tie a pet to its person; mixed so neighbours on screen differ.
 const PET_LINES=[n=>n+'’s biggest fan',n=>'Cheering on '+n,n=>n+'’s training buddy',n=>n+'’s best friend',n=>n+'’s sidekick'];
 const petLine=(n,i)=>PET_LINES[(i+new Date().getHours())%PET_LINES.length](n);
 function mascotHTML(pets){
-  if(!pets.length)return`<div class="spot auto"><small class="sph">METHOD MASCOTS</small><div class="spf on"><svg viewBox="0 0 24 24" style="fill:#ffd36b">${ICON.paw}</svg><div><small>MEET THE PACK</small><b>Method Mascots</b><p>Send us a photo of your pet’s face to see them up here!</p></div></div></div>`;
+  if(!pets.length)return`<div class="spot auto"><small class="sph">METHOD MASCOTS</small>${MASCOT_DECO}<div class="spf on"><svg viewBox="0 0 24 24" style="fill:#ffd36b">${ICON.paw}</svg><div><small>MEET THE PACK</small><b>Method Mascots</b><p>Send us a photo of your pet’s face to see them up here!</p></div></div></div>`;
   spotI%=pets.length;
-  return`<div class="spot auto"><small class="sph">METHOD MASCOTS</small>${pets.map((p,i)=>`<div class="spf ${i===spotI?'on':''}"><img class="petimg" src="${esc(p.photo)}" alt=""><div><b>${esc(p.name)}</b><p>${esc(petLine(p.owner,i))}</p></div></div>`).join('')}${pets.length>1?`<div class="spd">${pets.map((p,i)=>`<i class="${i===spotI?'on':''}"></i>`).join('')}</div>`:''}</div>`}
+  return`<div class="spot auto"><small class="sph">METHOD MASCOTS</small>${MASCOT_DECO}${pets.map((p,i)=>`<div class="spf ${i===spotI?'on':''}"><img class="petimg" src="${esc(p.photo)}" alt=""><div><b>${esc(p.name)}</b><p>${esc(petLine(p.owner,i))}</p></div></div>`).join('')}${pets.length>1?`<div class="spd">${pets.map((p,i)=>`<i class="${i===spotI?'on':''}"></i>`).join('')}</div>`:''}</div>`}
 function spotRotate(){clearInterval(spotTimer);spotTimer=setInterval(()=>{const f=[...document.querySelectorAll('.spot .spf')],d=[...document.querySelectorAll('.spot .spd i')];if(f.length<2)return;
   spotI=(spotI+1)%f.length;f.forEach((x,i)=>x.classList.toggle('on',i===spotI));d.forEach((x,i)=>x.classList.toggle('on',i===spotI))},8000)}
 function tvBadges(s){const out=[];const d=parse(s.date);

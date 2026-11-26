@@ -314,3 +314,10 @@ html,body{margin:0}
 .spot .petimg{width:clamp(84px,7.2vw,140px);height:clamp(84px,7.2vw,140px)}
 .spot.auto{padding-top:clamp(40px,3.1vw,58px)}
 .spot .sph{top:clamp(12px,1vw,18px)}
+.spot .deco{position:absolute;right:clamp(16px,1.8vw,34px);top:50%;transform:translateY(-46%);width:clamp(150px,12.5vw,240px);height:auto;pointer-events:none;fill:#ffd9c7}
+.spot .deco .cat{fill:#ffd9c7;opacity:.5;stroke:#ffd9c7;stroke-opacity:.5;stroke-width:0}
+.spot .deco .tail{fill:none;stroke:#ffd9c7;stroke-opacity:.5;stroke-width:3.4;stroke-linecap:round}
+.spot .deco .eye{fill:#8a4128}
+.spot .deco g[opacity]{animation:pawfade 4s ease-in-out infinite}
+.spot .deco g[opacity]:nth-of-type(2){animation-delay:.5s}.spot .deco g[opacity]:nth-of-type(3){animation-delay:1s}.spot .deco g[opacity]:nth-of-type(4){animation-delay:1.5s}
+@keyframes pawfade{0%,100%{opacity:.25}50%{opacity:.7}}
