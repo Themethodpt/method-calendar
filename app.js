@@ -351,9 +351,12 @@ const FIGS=(()=>{const A=(attr,a,b,d)=>`<animate attributeName="${attr}" values=
   lunge:d=>`${H(24,7,24,15,d)}${P('M24 13L25 25M24 12L24 27M24 27L29 36L33 46M24 27L18 36L12 46','M24 21L25 33M24 20L24 35M24 35L33 35L33 46M24 35L18 44L12 46',d)}<path d="M6 46.5H42" class="fl"/>`,
   curl:d=>`${H(24,8,24,8,d)}<path d="M24 13L24 30M24 30L20 46M24 30L28 46"/>${P('M24 14L16 22L14 31M24 14L32 22L34 31','M24 14L16 22L15 13M24 14L32 22L33 13',d)}<g>${T('14 32','15 12',d)}<path d=\"M-3 0H3\"/><rect x=\"-5\" y=\"-2.8\" width=\"2.4\" height=\"5.6\" rx=\".8\" class=\"pl\"/><rect x=\"2.6\" y=\"-2.8\" width=\"2.4\" height=\"5.6\" rx=\".8\" class=\"pl\"/></g><g>${T('34 32','33 12',d)}<path d=\"M-3 0H3\"/><rect x=\"-5\" y=\"-2.8\" width=\"2.4\" height=\"5.6\" rx=\".8\" class=\"pl\"/><rect x=\"2.6\" y=\"-2.8\" width=\"2.4\" height=\"5.6\" rx=\".8\" class=\"pl\"/></g>`}})();
 const FIGK=['squat','press','pullup','pushup','swing','lunge','curl'];
-function figFor(key){let h=0;for(const ch of String(key))h=(h*31+ch.charCodeAt(0))>>>0;const k=FIGK[h%FIGK.length];
+// Cards on screen use all 7 moves before any repeats (order shifts each hour for variety).
+let FIGN=0;
+function figFor(key){let h=0;for(const ch of String(key))h=(h*31+ch.charCodeAt(0))>>>0;const k=FIGK[FIGN++%FIGK.length];
   return`<svg class="fig" viewBox="0 0 48 48" aria-hidden="true">${FIGS[k]('-'+((h>>4)%18)/10+'s')}</svg>`}
 function tv(){
+  FIGN=new Date().getHours();
   const D=tvData;const TR=id=>D.trainers.find(t=>t.id===id)||{name:'',color:'#888'};
   const now=new Date(),k=iso(now),hNow=now.getHours(),tm=iso(addDays(now,1));
   const ss=D.sessions.map((s,i)=>({...s,i}));
