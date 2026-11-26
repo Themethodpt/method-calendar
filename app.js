@@ -337,6 +337,20 @@ async function tvLoad(){
   catch(e){console.error(e);if(!tvData)app.innerHTML='<div class="tv"><h1 style="color:#f4eee7">Can’t reach the schedule right now. Retrying…</h1></div>'}
   clearTimeout(tvTimer);tvTimer=setTimeout(()=>{if(location.hash==='#tv')tvLoad()},60000);
 }
+// Little animated workout figures for the TV cards (original line drawings).
+const FIGS=(()=>{const A=(attr,a,b,d)=>`<animate attributeName="${attr}" values="${a};${b};${a}" keyTimes="0;.5;1" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1" dur="1.8s" begin="${d}" repeatCount="indefinite"/>`;
+  const T=(a,b,d)=>`<animateTransform attributeName="transform" type="translate" values="${a};${b};${a}" keyTimes="0;.5;1" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1" dur="1.8s" begin="${d}" repeatCount="indefinite"/>`;
+  const P=(a,b,d)=>`<path d="${a}">${A('d',a,b,d)}</path>`;
+  const H=(x1,y1,x2,y2,d)=>`<circle r="4" cx="${x1}" cy="${y1}" class="hd">${A('cx',x1,x2,d)}${A('cy',y1,y2,d)}</circle>`;
+  return{
+  squat:d=>`<g>${T('0 0','0 9',d)}<path d="M7 14H41"/><rect x="7" y="9" width="3.5" height="10" rx="1" class="pl"/><rect x="37.5" y="9" width="3.5" height="10" rx="1" class="pl"/></g>${H(24,8,24,17,d)}${P('M15 14L18 19L24 15L30 19L33 14M24 15L24 29M24 29L19 37L18 46M24 29L29 37L30 46','M15 23L18 28L24 24L30 28L33 23M24 24L24 36M24 36L14 37L17 46M24 36L34 37L31 46',d)}`,
+  press:d=>`<g>${T('0 0','0 -12',d)}<path d="M7 15H41"/><rect x="7" y="10" width="3.5" height="10" rx="1" class="pl"/><rect x="37.5" y="10" width="3.5" height="10" rx="1" class="pl"/></g>${H(24,12,24,12,d)}${P('M14 15L15 23L24 18L33 23L34 15M24 18L24 33M24 33L20 46M24 33L28 46','M14 3L15 11L24 18L33 11L34 3M24 18L24 33M24 33L20 46M24 33L28 46',d)}`,
+  pullup:d=>`<path d="M6 10H42"/>${H(24,19,24,4,d)}${P('M16 10L19 17L24 24L29 17L32 10M24 24L24 35M24 35L22 46M24 35L26 46','M16 10L12 15L24 13L36 15L32 10M24 13L24 25M24 25L22 36M24 25L26 36',d)}`,
+  pushup:d=>`<path d="M3 44H45" class="fl"/>${H(9,26,8,35,d)}${P('M13 43L13 36L13 29M13 29L27 36L42 43','M13 43L19 40L13 37M13 37L27 40L42 43',d)}`,
+  swing:d=>`<g>${T('23 37','37 13',d)}<circle cx="0" cy="3" r="3.6" class="pl"/></g>${H(34,18,22,6,d)}${P('M30 22L24 36M30 22L16 30M16 30L20 38L21 46M16 30L24 38L25 46','M22 11L37 12M22 11L22 27M22 27L22 37L21 46M22 27L25 37L25 46',d)}`}})();
+const FIGK=['squat','press','pullup','pushup','swing'];
+function figFor(key){let h=0;for(const ch of String(key))h=(h*31+ch.charCodeAt(0))>>>0;const k=FIGK[h%FIGK.length];
+  return`<svg class="fig" viewBox="0 0 48 48" aria-hidden="true">${FIGS[k]('-'+((h>>4)%18)/10+'s')}</svg>`}
 function tv(){
   const D=tvData;const TR=id=>D.trainers.find(t=>t.id===id)||{name:'',color:'#888'};
   const now=new Date(),k=iso(now),hNow=now.getHours(),tm=iso(addDays(now,1));
@@ -346,7 +360,7 @@ function tv(){
   const groups=[];up.forEach(s=>{const g=groups.find(g=>g.date===s.date&&g.hour===s.hour);g?g.list.push(s):groups.push({date:s.date,hour:s.hour,list:[s]})});
   const lab=(g,i)=>g.date===tm?(i===0||groups[i-1].date!==tm?'Tomorrow · ':'')+hh(g.hour).replace(':00 ',' '):hh(g.hour).replace(':00 ',' ');
   const card=s=>{const t=TR(s.trainer),n=s.name,b=n?tvBadges(s):[];const tr=n?tierOf(s.n):0;const label=n||t.name;
-    return`<div class="cc ${tr?'t'+tr:''}" style="--c:${t.color}">${tr?`<em class="club">${tr}00 Club</em>`:''}<b class="${label.length>12?'xl':label.length>8?'lg':''}">${esc(label)}</b>${n?`<span>w/ ${esc(t.name)}</span>`:''}${b.length?`<div class="bdg">${b.map(([ic,tx,col],j)=>`<span class="bd" style="--b:${col};--d:${((s.hour*7+j*5+s.i)%9)*.3}s"><svg viewBox="0 0 24 24">${ICON[ic]}</svg>${tx}</span>`).join('')}</div>`:''}</div>`};
+    return`<div class="cc ${tr?'t'+tr:''}" style="--c:${t.color}">${tr?`<em class="club">${tr}00 Club</em>`:''}<b class="${label.length>12?'xl':label.length>8?'lg':''}">${esc(label)}</b>${n?`<span class="wt">w/ ${esc(t.name)}${figFor(n+'|'+t.name)}</span>`:''}${b.length?`<div class="bdg">${b.map(([ic,tx,col],j)=>`<span class="bd" style="--b:${col};--d:${((s.hour*7+j*5+s.i)%9)*.3}s"><svg viewBox="0 0 24 24">${ICON[ic]}</svg>${tx}</span>`).join('')}</div>`:''}</div>`};
   const col=(g,i)=>{if(!g)return'<div class="col"></div>';const live=g.date===k&&g.hour===hNow;
     return`<div class="col ${g.list.length>4?'many':''}"><div class="colh ${live?'live':''}">${live?'<span class="pulse"></span>Training now · ':i===0?'Up next · ':'Then · '}${lab(g,i)}</div><div class="cards">${g.list.map(card).join('')}</div></div>`};
   const rest=groups.slice(2,8);

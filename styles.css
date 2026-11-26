@@ -253,3 +253,15 @@ td select{padding:5px 8px;border-radius:8px;border:1px solid var(--ln);backgroun
 .wait .box{max-width:460px;display:flex;flex-direction:column;gap:12px;align-items:center}
 .logins td select{max-width:12em}
 html,body{margin:0}
+.cc .wt{display:flex!important;align-items:center;justify-content:space-between;gap:10px}
+.cc .fig{flex:none;margin:-4px -4px -4px 0;width:clamp(52px,4.4vw,84px);height:clamp(52px,4.4vw,84px);padding:4px;border-radius:14px;background:#0000002e;fill:none;stroke:#f4eee7;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.cc .fig .hd{fill:#f4eee7;stroke:none}
+.cc .fig .pl{fill:#f4eee7;stroke:none}
+.cc .fig .fl{stroke:#f4eee766}
+.ldr b{white-space:normal!important;overflow:visible!important}
+.tv .cards{grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr))}
+.tv .cc{min-height:clamp(120px,10.5vw,200px);padding:clamp(12px,1.2vw,22px) clamp(14px,1.3vw,24px)}
+.tv .cc b{font-size:clamp(34px,3.4vw,66px)}
+.tv .cc b.lg{font-size:clamp(28px,2.7vw,52px)}
+.tv .cc b.xl{font-size:clamp(22px,2.1vw,40px)}
+.tv .cc span{font-size:clamp(16px,1.4vw,27px)}
