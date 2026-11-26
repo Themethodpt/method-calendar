@@ -265,3 +265,22 @@ html,body{margin:0}
 .tv .cc b.lg{font-size:clamp(28px,2.7vw,52px)}
 .tv .cc b.xl{font-size:clamp(22px,2.1vw,40px)}
 .tv .cc span{font-size:clamp(16px,1.4vw,27px)}
+/* Two big columns: Now and Next (no Later list) */
+.tv .tvcols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.tv .cards{grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),1fr));gap:16px}
+.tv .cc{min-height:clamp(120px,10vw,190px)}
+.tv .cc .wt{margin-top:-4px}
+.tv .bdg{margin-top:4px}
+.tv .cc b{font-size:clamp(38px,3.8vw,72px)}
+.tv .cc b.lg{font-size:clamp(34px,3.4vw,66px)}
+.tv .cc b.xl{font-size:clamp(26px,2.6vw,50px)}
+.tv .cc span{font-size:clamp(18px,1.6vw,31px)}
+.tv .cc .fig{width:clamp(56px,4.6vw,88px);height:clamp(56px,4.6vw,88px)}
+.tv .bd{font-size:clamp(15px,1.25vw,24px)}
+.tv .club{font-size:clamp(14px,1.15vw,22px)}
+.tv .many .cards{grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr))}
+.tv .many .cc{min-height:0}
+.tv .many .cc b{font-size:clamp(30px,2.9vw,56px)}
+.tv .many .cc b.lg{font-size:clamp(26px,2.4vw,46px)}
+.tv .many .cc b.xl{font-size:clamp(20px,1.9vw,36px)}
+.tv .many .cc .fig{width:clamp(48px,4vw,76px);height:clamp(48px,4vw,76px)}

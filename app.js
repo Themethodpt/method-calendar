@@ -375,7 +375,7 @@ function tv(){
   <div class="tot"><div><b>${D.month_total}</b>sessions this month</div><div><b>${today.length}</b>sessions today</div></div>
   <div class="clock"><b>${now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</b><span>${now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</span></div></div>
   <div class="tvmid">${lead}${spot}</div>
-  <div class="tvcols">${groups.length?col(groups[0],0)+col(groups[1],1)+later:'<div class="wrapup">That’s a wrap. No more sessions booked for today or tomorrow.</div>'}</div></div>
+  <div class="tvcols">${groups.length?col(groups[0],0)+col(groups[1],1):'<div class="wrapup">That’s a wrap. No more sessions booked for today or tomorrow.</div>'}</div></div>
   <button class="btn sm tvx" data-act="exittv">Exit TV</button>`;
   spotRotate();
 }
