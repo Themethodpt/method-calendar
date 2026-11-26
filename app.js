@@ -209,7 +209,7 @@ function trainers(){
   <form class="form" id="tf"><input id="tn" placeholder="New trainer’s first name" required><button class="btn pri">Add trainer</button></form>
   <div class="ph" style="border-top:1px solid var(--ln)"><div><h2>Gym TV</h2><p>What the public screen shows for each session.</p></div><span class="sp"></span>
   <select id="tvn" style="padding:8px 12px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);font-size:15px">${[['first','Client first name only'],['full','Client full name'],['none','Trainer only, no client names']].map(([k,l])=>`<option value="${k}" ${S.tvNames===k?'selected':''}>${l}</option>`).join('')}</select><button class="btn" data-go="tv">Open TV display</button></div>
-  <p class="note">Badges on the TV are automatic: birthdays, 10th/25th/50th/100th sessions, “New member” for a client’s first two weeks, and streaks of 3+ weeks in a row (not shown for 100/200/300 Club members, since the club already shows their commitment). The corner box picks up to 4 highlights about clients in the Now and Next columns (birthdays, milestones, new members, close to a club, streaks) and rotates every 8 seconds. Nobody has to pick anything.</p></div>`;
+  <p class="note">Badges on the TV are automatic: birthdays, 10th/25th/50th/100th sessions, “New member” for a client’s first two weeks, and streaks of 3+ weeks in a row (not shown for 100/200/300 Club members, since the club already shows their commitment). The Method Mascots box rotates the pets of clients in the Now and Next columns every 8 seconds. Add a pet with the Pet button on the Clients tab. Nobody has to pick anything.</p></div>`;
 }
 
 function payroll(){
