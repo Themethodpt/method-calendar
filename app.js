@@ -185,10 +185,10 @@ function clients(){
   let list=S.clients.filter(c=>admin||c.trainer===me());const ql=V.q.toLowerCase();if(ql)list=list.filter(c=>c.name.toLowerCase().includes(ql));
   list.sort((a,b)=>(b.active-a.active)||a.name.localeCompare(b.name));
   const opts=c=>`<option value="">Unassigned</option>`+S.trainers.filter(t=>t.active).map(t=>`<option value="${t.id}" ${c.trainer===t.id?'selected':''}>${esc(t.name)}</option>`).join('');
-  return`<div class="panel"><div class="ph"><div><h2>${admin?'Client roster':'My clients'}</h2><p>${admin?'Move a client to another trainer, to Unassigned, or to inactive. Check-in shows this week’s status.':'Clients on your regular roster. Ask an admin to add or move a client.'}</p></div><span class="sp"></span><input id="q" placeholder="Search clients" value="${esc(V.q)}" style="padding:8px 12px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);font-size:16px"></div>
-  <div class="scroll"><table><thead><tr><th>Client</th><th>Regular trainer</th><th>Status</th><th class="hide-s">Birthday</th><th class="num hide-s">Lifetime</th><th class="num hide-s">Left on package</th><th class="num">This week</th><th>Check-in</th>${admin?'<th></th>':''}</tr></thead><tbody>
-  ${list.map(c=>`<tr class="${c.active?'':'muted'}"><td>${esc(c.name)}</td><td>${admin?`<select data-move="${c.id}">${opts(c)}</select>`:esc(T(c.trainer)?.name||'Unassigned')}</td><td>${admin?`<button class="btn sm" data-act="toggle" data-c="${c.id}">${c.active?'Active':'Inactive'}</button>`:(c.active?'Active':'Inactive')}</td><td class="hide-s">${c.bday?parse('2000-'+c.bday).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'<span class="muted">–</span>'}</td><td class="num hide-s">${lifeTotal(c)}</td><td class="num hide-s">${esc(c.left??'')}</td><td class="num">${wk.filter(s=>s.client===c.id).length}</td><td>${!c.active?'':!noSess(c)?'<span class="pill">Booked</span>':ciOf(c.id)==='away'?'<span class="pill">Out of town</span>':'<span class="pill w">Needs check-in</span>'}</td>${admin?`<td><button class="btn sm" data-editc="${c.id}">Edit</button></td>`:''}</tr>`).join('')}
-  </tbody></table></div>${admin?`<form class="form" id="cf"><input id="cn" placeholder="New client full name" required><input id="cb" placeholder="Birthday MM/DD (optional)" style="width:14em"><select id="ct">${opts({trainer:''})}</select><button class="btn pri">Add client</button></form>`:''}</div>`;
+  return`<div class="panel"><div class="ph"><div><h2>${admin?'Client roster':'My clients'}</h2><p>${admin?'Move a client to another trainer, to Unassigned, or to inactive. Check-in shows this week’s status.':'Clients on your regular roster. Tap Pet to add their pet for the gym TV. Ask an admin to add or move a client.'}</p></div><span class="sp"></span><input id="q" placeholder="Search clients" value="${esc(V.q)}" style="padding:8px 12px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);font-size:16px"></div>
+  <div class="scroll"><table><thead><tr><th>Client</th><th>Regular trainer</th><th>Status</th><th class="hide-s">Birthday</th><th class="num hide-s">Lifetime</th><th class="num hide-s">Left on package</th><th class="num">This week</th><th>Check-in</th><th>Pet</th>${admin?'<th></th>':''}</tr></thead><tbody>
+  ${list.map(c=>`<tr class="${c.active?'':'muted'}"><td>${esc(c.name)}</td><td>${admin?`<select data-move="${c.id}">${opts(c)}</select>`:esc(T(c.trainer)?.name||'Unassigned')}</td><td>${admin?`<button class="btn sm" data-act="toggle" data-c="${c.id}">${c.active?'Active':'Inactive'}</button>`:(c.active?'Active':'Inactive')}</td><td class="hide-s">${c.bday?parse('2000-'+c.bday).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'<span class="muted">–</span>'}</td><td class="num hide-s">${lifeTotal(c)}</td><td class="num hide-s">${esc(c.left??'')}</td><td class="num">${wk.filter(s=>s.client===c.id).length}</td><td>${!c.active?'':!noSess(c)?'<span class="pill">Booked</span>':ciOf(c.id)==='away'?'<span class="pill">Out of town</span>':'<span class="pill w">Needs check-in</span>'}</td><td><button class="btn sm" data-pet="${c.id}">${c.pet?esc(c.pet.name):'+ Add pet'}</button></td>${admin?`<td><button class="btn sm" data-editc="${c.id}">Edit</button></td>`:''}</tr>`).join('')}
+  </tbody></table></div>${admin?`<div class="form"><button class="btn pri" data-act="addclient">+ Add client</button></div>`:''}</div>`;
 }
 
 function trainers(){
@@ -231,6 +231,40 @@ function hours(){
 
 const splitName=n=>{const p=n.trim().split(/\s+/);return{first_name:p.shift()||'',last_name:p.join(' ')}};
 const parseBday=v=>{const m=String(v||'').match(/(\d{1,2})\D+(\d{1,2})/);return m?pad(+m[1])+'-'+pad(+m[2]):null};
+// Pet fields shared by the add-client, edit-client and trainer pet forms.
+const petFields=c=>`<div class="two"><div class="fld"><label for="epn">Pet’s name</label><input id="epn" value="${esc(c.pet?.name||'')}" placeholder="e.g. Finn"></div>
+  <div class="fld"><label for="ept">Kind of pet</label><input id="ept" value="${esc(c.pet?.type||'')}" placeholder="e.g. Labradoodle"></div></div>
+  <div class="fld"><label for="epp">Pet photo for the TV (a close-up of their face works best)</label><div class="petrow">${petOK(c.pet)?`<img src="${esc(c.pet.photo)}" alt="">`:''}<input type="file" id="epp" accept="image/*">${c.pet?'<label class="muted"><input type="checkbox" id="epx"> Remove pet</label>':''}</div><span id="epm" class="muted"></span></div>`;
+// Returns the pet columns to save ({} = leave as is), or null after showing an error.
+async function readPet($,c){let ph=null;try{ph=await petPhoto($('epp').files[0])}catch(err){$('epm').textContent=err.message;return null}
+  const pn=$('epn').value.trim(),pt=$('ept').value.trim(),photo=ph||(c.pet&&c.pet.photo);
+  if($('epx')&&$('epx').checked)return{pet_name:null,pet_type:null,pet_photo:null};
+  if(pn&&photo)return{pet_name:pn,pet_type:pt||null,pet_photo:photo};
+  if(pn||ph){$('epm').textContent='Add both the pet’s name and a photo.';return null}return{}}
+function newClientModal(){
+  const ov=document.createElement('div');ov.className='ov';
+  ov.innerHTML=`<form class="modal" id="cf"><h2>Add client</h2>
+  <div class="fld"><label for="cn">Full name</label><input id="cn" required></div>
+  <div class="two"><div class="fld"><label for="ct">Regular trainer</label><select id="ct"><option value="">Unassigned</option>${S.trainers.filter(t=>t.active).map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('')}</select></div>
+  <div class="fld"><label for="cb">Birthday (MM/DD)</label><input id="cb" placeholder="optional"></div></div>
+  ${petFields({})}
+  <div class="mf"><span class="sp"></span><button type="button" class="btn" data-m="x">Cancel</button><button class="btn pri" id="cfs">Add client</button></div></form>`;
+  document.body.appendChild(ov);const $=id=>ov.querySelector('#'+id);$('cn').focus();
+  ov.addEventListener('click',e=>{if(e.target===ov||e.target.dataset.m==='x')ov.remove()});
+  $('cf').onsubmit=async e=>{e.preventDefault();e.stopPropagation();const n=$('cn').value.trim();if(!n)return;const petp=await readPet($,{});if(!petp)return;
+    ov.remove();act(()=>q(sb.from('clients').insert({...splitName(n),trainer_id:$('ct').value||null,birthday:parseBday($('cb').value),member_since:iso(new Date()),...petp})),'Client added')};
+}
+// Trainers can add or change the pet on their own clients (saved through set_client_pet).
+function petModal(c){
+  const ov=document.createElement('div');ov.className='ov';
+  ov.innerHTML=`<form class="modal" id="pf"><h2>${esc(c.first||c.name)}’s pet</h2><p class="muted" style="padding:0 20px;margin:0 0 4px">Shows on the gym TV in the Method Mascots box while ${esc(c.first||c.name)} is training.</p>
+  ${petFields(c)}
+  <div class="mf"><span class="sp"></span><button type="button" class="btn" data-m="x">Cancel</button><button class="btn pri">Save pet</button></div></form>`;
+  document.body.appendChild(ov);const $=id=>ov.querySelector('#'+id);
+  ov.addEventListener('click',e=>{if(e.target===ov||e.target.dataset.m==='x')ov.remove()});
+  $('pf').onsubmit=async e=>{e.preventDefault();e.stopPropagation();const p=await readPet($,c);if(!p)return;if(!('pet_name' in p)){ov.remove();return}
+    ov.remove();act(()=>q(sb.rpc('set_client_pet',{cid:c.id,pname:p.pet_name,ptype:p.pet_type,pphoto:p.pet_photo})),p.pet_name?'Pet saved':'Pet removed')};
+}
 function clientModal(c){
   const ov=document.createElement('div');ov.className='ov';const past=lifeTotal(c)-(c.prior||0);
   const bd=c.bday?(+c.bday.slice(0,2))+'/'+(+c.bday.slice(3)):'';
@@ -241,17 +275,13 @@ function clientModal(c){
   <div class="two"><div class="fld"><label for="el">Lifetime sessions</label><input id="el" type="number" min="0" value="${lifeTotal(c)}"></div>
   <div class="fld"><label for="es">Status</label><select id="es"><option value="1" ${c.active?'selected':''}>Active</option><option value="0" ${c.active?'':'selected'}>Inactive</option></select></div></div>
   <div class="fld"><label for="ek">Sessions left on package</label><input id="ek" value="${esc(c.left??'')}"></div>
-  <div class="two"><div class="fld"><label for="epn">Pet’s name</label><input id="epn" value="${esc(c.pet?.name||'')}" placeholder="e.g. Finn"></div>
-  <div class="fld"><label for="ept">Kind of pet</label><input id="ept" value="${esc(c.pet?.type||'')}" placeholder="e.g. Labradoodle"></div></div>
-  <div class="fld"><label for="epp">Pet photo for the TV (a close-up of their face works best)</label><div class="petrow">${petOK(c.pet)?`<img src="${esc(c.pet.photo)}" alt="">`:''}<input type="file" id="epp" accept="image/*">${c.pet?'<label class="muted"><input type="checkbox" id="epx"> Remove pet</label>':''}</div><span id="epm" class="muted"></span></div>
+  ${petFields(c)}
   <p class="muted" style="padding:0 20px;font-size:13px;margin:6px 0 0">Lifetime sessions sets the 100/200/300 Club color on the TV. Inactive clients drop off the trainers’ booking list.</p>
   <div class="mf"><span class="sp"></span><button type="button" class="btn" data-m="x">Cancel</button><button class="btn pri">Save</button></div></form>`;
   document.body.appendChild(ov);const $=id=>ov.querySelector('#'+id);
   ov.addEventListener('click',e=>{if(e.target===ov||e.target.dataset.m==='x')ov.remove()});
   $('ef').onsubmit=async e=>{e.preventDefault();const n=$('en').value.trim();if(!n)return;
-    let ph=null;try{ph=await petPhoto($('epp').files[0])}catch(err){$('epm').textContent=err.message;return}
-    const pn=$('epn').value.trim(),pt=$('ept').value.trim(),photo=ph||(c.pet&&c.pet.photo);let petp={};
-    if($('epx')&&$('epx').checked)petp={pet_name:null,pet_type:null,pet_photo:null};else if(pn&&photo)petp={pet_name:pn,pet_type:pt||null,pet_photo:photo};else if(pn||ph){$('epm').textContent='Add both the pet’s name and a photo.';return}
+    const petp=await readPet($,c);if(!petp)return;
     const L=Math.max(0,+$('el').value||0);
     const patch={...splitName(n),trainer_id:$('et').value||null,active:$('es').value==='1',birthday:parseBday($('eb').value),prior_sessions:Math.max(0,L-past),sessions_left:$('ek').value.trim()||null,...petp};
     ov.remove();act(()=>q(sb.from('clients').update(patch).eq('id',c.id)),'Client saved')};
@@ -419,6 +449,7 @@ app.addEventListener('click',e=>{
   if(d.slot){const[t,h]=d.slot.split('|');return modal(null,{trainer:t,hour:+h,date:V.day})}
   if(d.new)return modal(null,{date:d.new});
   if(d.editc)return clientModal(C(d.editc));
+  if(d.pet)return petModal(C(d.pet));
   if(d.book)return modal(null,{client:d.book,date:iso(new Date())});
   if(d.ci){const[id,v]=d.ci.split('|');return act(async()=>{await q(sb.from('checkins').upsert({week_start:wkKey(),client_id:id,status:v}));if(v==='inactive')await q(sb.rpc('checkin_inactive',{cid:id}))},v==='away'?'Marked out of town this week':'Marked inactive')}
   if(d.saveprof){const id=d.saveprof;const role=document.getElementById('pr-'+id).value,tr=document.getElementById('pt-'+id).value||null;
@@ -432,7 +463,7 @@ app.addEventListener('click',e=>{
   if(a==='back'){viewAs=null;V.tab='trainers';return render()}
   if(a==='viewas'){viewAs=d.t;V.tab='week';return render()}
   if(a==='new')return modal(null,{date:V.tab==='day'?V.day:iso(new Date())});
-  if(a==='addclient'){V.tab='clients';render();const n=document.getElementById('cn');if(n)n.focus();return}
+  if(a==='addclient')return newClientModal();
   if(a==='wk-1'||a==='wk1'){V.week=addDays(V.week,a==='wk1'?7:-7);return ensureRange(V.week).then(render)}
   if(a==='wk0'){V.week=satOf(new Date());return render()}
   if(a==='d-1'||a==='d1'){V.day=iso(addDays(parse(V.day),a==='d1'?1:-1));return ensureRange(parse(V.day)).then(render)}
@@ -455,7 +486,6 @@ app.addEventListener('submit',async e=>{e.preventDefault();const f=e.target;cons
       else if(authMode==='recovery'){const {error}=await sb.auth.updateUser({password:document.getElementById('ap').value});if(error)throw error;authMode='in';authMsg='Password saved.';await whoAmI();await load()}
     }catch(err){authErr=err.message==='Invalid login credentials'?'That email and password don’t match.':(err.message||String(err))}
     return render()}
-  if(f.id==='cf'){const n=val('cn');if(!n)return;return act(()=>q(sb.from('clients').insert({...splitName(n),trainer_id:val('ct')||null,birthday:parseBday(val('cb')),member_since:iso(new Date())})),'Client added')}
   if(f.id==='tf'){const n=val('tn');if(!n)return;return act(()=>q(sb.from('trainers').insert({name:n,color:COLORS[S.trainers.length%COLORS.length]})),'Trainer added')}
 });
 app.addEventListener('change',e=>{const t=e.target;

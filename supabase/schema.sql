@@ -183,3 +183,18 @@ language sql stable security definer set search_path=public as $$
   select c.id, (c.prior_sessions + (select count(*) from sessions x where x.client_id=c.id and x.date<=current_date))::int
   from clients c where is_admin() or c.trainer_id=my_trainer() $$;
 revoke execute on function client_totals() from anon;
+
+-- Trainers can set the pet (name, kind, photo) on their own clients; admins on any client. Nothing else on the client changes.
+create or replace function set_client_pet(cid uuid, pname text, ptype text, pphoto text) returns void
+language plpgsql security definer set search_path=public as $$
+begin
+  if auth.uid() is null or not exists (select 1 from clients where id=cid and (is_admin() or trainer_id=my_trainer())) then
+    raise exception 'You can only change pets for your own clients';
+  end if;
+  pname:=nullif(trim(pname),'');
+  if pname is not null and pphoto is null then raise exception 'Add both the pet''s name and a photo'; end if;
+  update clients set pet_name=pname, pet_type=case when pname is null then null else nullif(trim(ptype),'') end,
+    pet_photo=case when pname is null then null else pphoto end where id=cid;
+end $$;
+revoke execute on function set_client_pet(uuid,text,text,text) from public, anon;
+grant execute on function set_client_pet(uuid,text,text,text) to authenticated;
