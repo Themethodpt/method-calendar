@@ -65,7 +65,6 @@ create table if not exists settings (
   value jsonb
 );
 insert into settings(key,value) values ('tv_names','"first"') on conflict do nothing;
-insert into settings(key,value) values ('pet','null') on conflict do nothing;
 
 -- ---------- Helpers ----------
 create or replace function is_admin() returns boolean language sql stable security definer set search_path=public as
@@ -156,10 +155,24 @@ create or replace function tv_board(day date) returns jsonb language sql stable 
         'bday',c.birthday,'since',c.member_since,
         'weeks',(select array_agg(distinct (x.date - ((extract(dow from x.date)::int+1)%7))) from sessions x where x.client_id=c.id and x.date>day-120 and x.date<=s.date)
       ) order by s.date,s.hour),'[]') from s join clients c on c.id=s.client_id),
-    'month_total',(select count(*) from sessions where date_trunc('month',date)=date_trunc('month',day) and date<=day),
-    'pet',(select case when value is null or value='null'::jsonb then null else value end from settings where key='pet')
+    'month_total',(select count(*) from sessions where date_trunc('month',date)=date_trunc('month',day) and date<=day)
   ) $$;
 grant execute on function tv_board(date) to anon, authenticated;
+
+-- Method Mascots: each client can have a pet (name, kind, small face photo) for the TV.
+alter table clients add column if not exists pet_name text;
+alter table clients add column if not exists pet_type text;
+alter table clients add column if not exists pet_photo text check (pet_photo is null or (pet_photo like 'data:image/%' and length(pet_photo) < 400000));
+
+-- Gym TV pets: public, no login. Only pets of clients booked today/tomorrow, with the owner's first name.
+create or replace function tv_pets(day date) returns jsonb language sql stable security definer set search_path=public as $$
+  select coalesce(jsonb_agg(jsonb_build_object('date',s.date,'hour',s.hour,'trainer',s.trainer_id,'pet',c.pet_name,'type',c.pet_type,
+    'owner',case (select value#>>'{}' from settings where key='tv_names') when 'full' then c.first_name||' '||c.last_name else c.first_name end,
+    'photo',c.pet_photo)),'[]')
+  from sessions s join clients c on c.id=s.client_id
+  where s.date between day and day+1 and c.pet_name is not null and c.pet_photo is not null
+    and coalesce((select value#>>'{}' from settings where key='tv_names'),'first')<>'none' $$;
+grant execute on function tv_pets(date) to anon, authenticated;
 revoke execute on function checkin_inactive(uuid) from anon;
 revoke execute on function search_cover_clients(text) from anon;
 revoke execute on function session_client_names(uuid[]) from anon;

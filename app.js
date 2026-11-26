@@ -60,12 +60,12 @@ async function load(){
     q(sb.rpc('client_totals'))
   ]);
   S.trainers=tr.map(t=>({id:t.id,name:t.name,full:t.full_name,color:t.color,hours:t.hours||{},active:t.active}));
-  S.clients=cl.map(c=>({id:c.id,first:c.first_name,last:c.last_name,name:(c.first_name+' '+(c.last_name||'')).trim(),trainer:c.trainer_id||'',active:c.active,prior:c.prior_sessions,since:c.member_since,bday:c.birthday,left:c.sessions_left}));
+  S.clients=cl.map(c=>({id:c.id,first:c.first_name,last:c.last_name,name:(c.first_name+' '+(c.last_name||'')).trim(),trainer:c.trainer_id||'',active:c.active,prior:c.prior_sessions,since:c.member_since,bday:c.birthday,left:c.sessions_left,pet:c.pet_name?{name:c.pet_name,type:c.pet_type||'',photo:c.pet_photo}:null}));
   S.sessions=se.map(s=>({id:s.id,date:s.date,hour:s.hour,client:s.client_id,trainer:s.trainer_id,type:s.type}));
   S.checkins={[wk]:Object.fromEntries(ck.map(c=>[c.client_id,c.status]))};
   S.totals=Object.fromEntries(tot.map(r=>[r.id,r.total]));
   const set=Object.fromEntries(st.map(r=>[r.key,r.value]));
-  S.tvNames=set.tv_names||'first';S.pet=set.pet||null;
+  S.tvNames=set.tv_names||'first';
   const missing=[...new Set(S.sessions.map(s=>s.client))].filter(id=>!S.clients.some(c=>c.id===id));
   S.extra={};
   if(missing.length){const r=await q(sb.rpc('session_client_names',{ids:missing}));r.forEach(x=>S.extra[x.id]={name:x.name,trainer:x.trainer_id||''})}
@@ -209,7 +209,6 @@ function trainers(){
   <form class="form" id="tf"><input id="tn" placeholder="New trainer’s first name" required><button class="btn pri">Add trainer</button></form>
   <div class="ph" style="border-top:1px solid var(--ln)"><div><h2>Gym TV</h2><p>What the public screen shows for each session.</p></div><span class="sp"></span>
   <select id="tvn" style="padding:8px 12px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);font-size:15px">${[['first','Client first name only'],['full','Client full name'],['none','Trainer only, no client names']].map(([k,l])=>`<option value="${k}" ${S.tvNames===k?'selected':''}>${l}</option>`).join('')}</select><button class="btn" data-go="tv">Open TV display</button></div>
-  <form class="petform" id="petf">${petOK(S.pet)?`<img src="${esc(S.pet.photo)}" alt="">`:''}<b>Pet of the week</b><input type="text" id="pn" placeholder="Pet's name" value="${esc(S.pet?.name||'')}"><input type="text" id="pb" placeholder="Breed (optional)" value="${esc(S.pet?.breed||'')}"><input type="text" id="po" placeholder="Owner, e.g. Craig" value="${esc(S.pet?.owner||'')}"><input type="file" id="pp" accept="image/*"><button class="btn pri">Save pet</button>${S.pet?'<button class="btn" type="button" data-act="petclear">Remove</button>':''}<span id="pm" class="muted"></span></form>
   <p class="note">Badges on the TV are automatic: birthdays, 10th/25th/50th/100th sessions, “New member” for a client’s first two weeks, and streaks of 3+ weeks in a row (not shown for 100/200/300 Club members, since the club already shows their commitment). The corner box picks up to 4 highlights about clients in the Now and Next columns (birthdays, milestones, new members, close to a club, streaks) and rotates every 8 seconds. Nobody has to pick anything.</p></div>`;
 }
 
@@ -242,13 +241,19 @@ function clientModal(c){
   <div class="two"><div class="fld"><label for="el">Lifetime sessions</label><input id="el" type="number" min="0" value="${lifeTotal(c)}"></div>
   <div class="fld"><label for="es">Status</label><select id="es"><option value="1" ${c.active?'selected':''}>Active</option><option value="0" ${c.active?'':'selected'}>Inactive</option></select></div></div>
   <div class="fld"><label for="ek">Sessions left on package</label><input id="ek" value="${esc(c.left??'')}"></div>
+  <div class="two"><div class="fld"><label for="epn">Pet’s name</label><input id="epn" value="${esc(c.pet?.name||'')}" placeholder="e.g. Finn"></div>
+  <div class="fld"><label for="ept">Kind of pet</label><input id="ept" value="${esc(c.pet?.type||'')}" placeholder="e.g. Labradoodle"></div></div>
+  <div class="fld"><label for="epp">Pet photo for the TV (a close-up of their face works best)</label><div class="petrow">${petOK(c.pet)?`<img src="${esc(c.pet.photo)}" alt="">`:''}<input type="file" id="epp" accept="image/*">${c.pet?'<label class="muted"><input type="checkbox" id="epx"> Remove pet</label>':''}</div><span id="epm" class="muted"></span></div>
   <p class="muted" style="padding:0 20px;font-size:13px;margin:6px 0 0">Lifetime sessions sets the 100/200/300 Club color on the TV. Inactive clients drop off the trainers’ booking list.</p>
   <div class="mf"><span class="sp"></span><button type="button" class="btn" data-m="x">Cancel</button><button class="btn pri">Save</button></div></form>`;
   document.body.appendChild(ov);const $=id=>ov.querySelector('#'+id);
   ov.addEventListener('click',e=>{if(e.target===ov||e.target.dataset.m==='x')ov.remove()});
-  $('ef').onsubmit=e=>{e.preventDefault();const n=$('en').value.trim();if(!n)return;
+  $('ef').onsubmit=async e=>{e.preventDefault();const n=$('en').value.trim();if(!n)return;
+    let ph=null;try{ph=await petPhoto($('epp').files[0])}catch(err){$('epm').textContent=err.message;return}
+    const pn=$('epn').value.trim(),pt=$('ept').value.trim(),photo=ph||(c.pet&&c.pet.photo);let petp={};
+    if($('epx')&&$('epx').checked)petp={pet_name:null,pet_type:null,pet_photo:null};else if(pn&&photo)petp={pet_name:pn,pet_type:pt||null,pet_photo:photo};else if(pn||ph){$('epm').textContent='Add both the pet’s name and a photo.';return}
     const L=Math.max(0,+$('el').value||0);
-    const patch={...splitName(n),trainer_id:$('et').value||null,active:$('es').value==='1',birthday:parseBday($('eb').value),prior_sessions:Math.max(0,L-past),sessions_left:$('ek').value.trim()||null};
+    const patch={...splitName(n),trainer_id:$('et').value||null,active:$('es').value==='1',birthday:parseBday($('eb').value),prior_sessions:Math.max(0,L-past),sessions_left:$('ek').value.trim()||null,...petp};
     ov.remove();act(()=>q(sb.from('clients').update(patch).eq('id',c.id)),'Client saved')};
 }
 
@@ -300,7 +305,7 @@ function modal(s,pre){
 }
 
 // ---------- TV ----------
-const ICON={bell:'<path d="M1 9.5h2v-2h2.2v-2H8v13H5.2v-2H3v-2H1zM16 5.5h2.8v2H21v2h2v5h-2v2h-2.2v2H16zM9 10.6h6v2.8H9z"/>',kb:'<path fill-rule="evenodd" d="M7.5 2h9A2.5 2.5 0 0 1 19 4.5v3.2l-1.3 1.6A7.8 7.8 0 1 1 6.3 9.3L5 7.7V4.5A2.5 2.5 0 0 1 7.5 2zm.3 2.4a.6.6 0 0 0-.6.6v1.8l1 1.2A7.7 7.7 0 0 1 12 7a7.7 7.7 0 0 1 3.8 1l1-1.2V5a.6.6 0 0 0-.6-.6z"/>',plate:'<path fill-rule="evenodd" d="M12 1a11 11 0 1 1 0 22 11 11 0 0 1 0-22zm0 8.6a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8zM12 3.6A8.4 8.4 0 0 0 3.6 12h1.8A6.6 6.6 0 0 1 12 5.4z"/>',heart:'<path d="M12 21s-8.5-5.2-8.5-11.3A4.7 4.7 0 0 1 12 6.9a4.7 4.7 0 0 1 8.5 2.8C20.5 15.8 12 21 12 21z"/>',star:'<path d="M12 2l3 6.5 7 .8-5.2 4.8 1.4 7L12 17.6 5.8 21l1.4-7L2 9.3l7-.8z"/>',flame:'<path d="M12 2c1 4 6 6.5 6 12a6 6 0 0 1-12 0c0-3.2 1.8-4.8 2.6-7.3 1.2 1.3 1.9 2.6 1.9 4.6 1.6-2.4 1.9-5.6 1.5-9.3z"/>',cake:'<path d="M11 2.5c-1 1.4-1.2 2.6 0 3.3h2c1.2-.7 1-1.9 0-3.3l-1-1.2zM11 7h2v3h-2zM4 11h16a1 1 0 0 1 1 1v3c-1.4 0-1.4 1.3-3 1.3S16.4 15 15 15s-1.4 1.3-3 1.3S10.4 15 9 15s-1.4 1.3-3 1.3S4.4 15 3 15v-3a1 1 0 0 1 1-1zM3 17c1.6.6 2.6-.6 3-.6s1.4 1.3 3 1.3 1.6-1.3 3-1.3 1.4 1.3 3 1.3 1.6-1.3 3-1.3 1.4 1.2 3 .6v4H3z"/>',spark:'<path d="M12 1.5l2.3 7.2 7.2 2.3-7.2 2.3L12 20.5l-2.3-7.2L2.5 11l7.2-2.3zM19 16l.9 2.4 2.4.9-2.4.9L19 22.6l-.9-2.4-2.4-.9 2.4-.9z"/>'};
+const ICON={paw:'<path d="M12 13c-3.2 0-6.2 3-6.2 5.6 0 1.7 1.3 2.6 3 2.6 1.3 0 2.1-.7 3.2-.7s1.9.7 3.2.7c1.7 0 3-.9 3-2.6C18.2 16 15.2 13 12 13zM6.2 12.2c1.3-.4 1.9-2.1 1.3-3.8S5.6 5.7 4.3 6.1 2.4 8.2 3 9.9s1.9 2.7 3.2 2.3zM10 8.6c1.4-.2 2.2-1.9 1.9-3.7S10.3 2 8.9 2.2 6.7 4.1 7 5.9s1.6 2.9 3 2.7zM17.8 12.2c1.3.4 2.6-.6 3.2-2.3s-.1-3.4-1.3-3.8-2.6.6-3.2 2.3-.1 3.4 1.3 3.8zM14 8.6c1.4.2 2.7-1 3-2.7s-.5-3.5-1.9-3.7-2.7 1-3 2.7.5 3.5 1.9 3.7z"/>',bell:'<path d="M1 9.5h2v-2h2.2v-2H8v13H5.2v-2H3v-2H1zM16 5.5h2.8v2H21v2h2v5h-2v2h-2.2v2H16zM9 10.6h6v2.8H9z"/>',kb:'<path fill-rule="evenodd" d="M7.5 2h9A2.5 2.5 0 0 1 19 4.5v3.2l-1.3 1.6A7.8 7.8 0 1 1 6.3 9.3L5 7.7V4.5A2.5 2.5 0 0 1 7.5 2zm.3 2.4a.6.6 0 0 0-.6.6v1.8l1 1.2A7.7 7.7 0 0 1 12 7a7.7 7.7 0 0 1 3.8 1l1-1.2V5a.6.6 0 0 0-.6-.6z"/>',plate:'<path fill-rule="evenodd" d="M12 1a11 11 0 1 1 0 22 11 11 0 0 1 0-22zm0 8.6a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8zM12 3.6A8.4 8.4 0 0 0 3.6 12h1.8A6.6 6.6 0 0 1 12 5.4z"/>',heart:'<path d="M12 21s-8.5-5.2-8.5-11.3A4.7 4.7 0 0 1 12 6.9a4.7 4.7 0 0 1 8.5 2.8C20.5 15.8 12 21 12 21z"/>',star:'<path d="M12 2l3 6.5 7 .8-5.2 4.8 1.4 7L12 17.6 5.8 21l1.4-7L2 9.3l7-.8z"/>',flame:'<path d="M12 2c1 4 6 6.5 6 12a6 6 0 0 1-12 0c0-3.2 1.8-4.8 2.6-7.3 1.2 1.3 1.9 2.6 1.9 4.6 1.6-2.4 1.9-5.6 1.5-9.3z"/>',cake:'<path d="M11 2.5c-1 1.4-1.2 2.6 0 3.3h2c1.2-.7 1-1.9 0-3.3l-1-1.2zM11 7h2v3h-2zM4 11h16a1 1 0 0 1 1 1v3c-1.4 0-1.4 1.3-3 1.3S16.4 15 15 15s-1.4 1.3-3 1.3S10.4 15 9 15s-1.4 1.3-3 1.3S4.4 15 3 15v-3a1 1 0 0 1 1-1zM3 17c1.6.6 2.6-.6 3-.6s1.4 1.3 3 1.3 1.6-1.3 3-1.3 1.4 1.3 3 1.3 1.6-1.3 3-1.3 1.4 1.2 3 .6v4H3z"/>',spark:'<path d="M12 1.5l2.3 7.2 7.2 2.3-7.2 2.3L12 20.5l-2.3-7.2L2.5 11l7.2-2.3zM19 16l.9 2.4 2.4.9-2.4.9L19 22.6l-.9-2.4-2.4-.9 2.4-.9z"/>'};
 const MS=[10,25,50,75,100,150,200,250,300,400,500];
 const tierOf=n=>n>=300?3:n>=200?2:n>=100?1:0;
 function streakN(s){const wks=new Set(s.weeks||[]);let w=satOf(parse(s.date)),n=0;while(wks.has(iso(w))){n++;w=addDays(w,-7)}return n}
@@ -320,11 +325,12 @@ function spotFacts(items){const seen=new Set(),out=[];
   out.sort((a,b)=>b.s-a.s);const pick=[],labs=new Set();out.forEach(f=>{const t=f.lab.split(' ')[0];if(pick.length<4&&!labs.has(t)){pick.push(f);labs.add(t)}});
   out.forEach(f=>{if(pick.length<4&&!pick.includes(f))pick.push(f)});return pick.sort((a,b)=>b.s-a.s)}
 let spotI=0,spotTimer=null;
-// Pet of the Week rotates in with the floor highlights (2nd slot). Photo must be an uploaded image (data:image/...).
 const petOK=p=>p&&p.name&&typeof p.photo==='string'&&/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/.test(p.photo);
-function spotHTML(facts,pet){facts=facts.slice();if(petOK(pet))facts.splice(Math.min(1,facts.length),0,{pet:1,name:pet.name,lab:'Pet of the week',line:[pet.breed,pet.owner?'owned by '+pet.owner:''].filter(Boolean).join(' · '),img:pet.photo});
-  if(!facts.length)return'<div></div>';spotI%=facts.length;
-  return`<div class="spot auto">${facts.map((f,i)=>`<div class="spf ${i===spotI?'on':''}"><small class="sph">${f.pet?'THE METHOD FAMILY':'ON THE FLOOR RIGHT NOW'}</small>${f.img?`<img class="petimg" src="${esc(f.img)}" alt="">`:`<svg viewBox="0 0 24 24" style="fill:${f.col}">${ICON[f.ic]}</svg>`}<div><small>${esc(f.lab.toUpperCase())}</small><b>${esc(f.name)}</b><p>${esc(f.line)}</p></div></div>`).join('')}${facts.length>1?`<div class="spd">${facts.map((f,i)=>`<i class="${i===spotI?'on':''}"></i>`).join('')}</div>`:''}</div>`}
+// Method Mascots: the top box rotates through pets of clients in the Now and Next columns.
+function mascotHTML(pets){
+  if(!pets.length)return`<div class="spot auto"><small class="sph">METHOD MASCOTS</small><div class="spf on"><svg viewBox="0 0 24 24" style="fill:#ffd36b">${ICON.paw}</svg><div><small>MEET THE PACK</small><b>Method Mascots</b><p>Send us a photo of your pet’s face to see them up here!</p></div></div></div>`;
+  spotI%=pets.length;
+  return`<div class="spot auto"><small class="sph">METHOD MASCOTS</small>${pets.map((p,i)=>`<div class="spf ${i===spotI?'on':''}"><img class="petimg" src="${esc(p.photo)}" alt=""><div>${p.type?`<small>${esc(p.type.toUpperCase())}</small>`:''}<b>${esc(p.name)}</b><p>belongs to ${esc(p.owner)}</p></div></div>`).join('')}${pets.length>1?`<div class="spd">${pets.map((p,i)=>`<i class="${i===spotI?'on':''}"></i>`).join('')}</div>`:''}</div>`}
 function spotRotate(){clearInterval(spotTimer);spotTimer=setInterval(()=>{const f=[...document.querySelectorAll('.spot .spf')],d=[...document.querySelectorAll('.spot .spd i')];if(f.length<2)return;
   spotI=(spotI+1)%f.length;f.forEach((x,i)=>x.classList.toggle('on',i===spotI));d.forEach((x,i)=>x.classList.toggle('on',i===spotI))},8000)}
 function tvBadges(s){const out=[];const d=parse(s.date);
@@ -335,9 +341,12 @@ function tvBadges(s){const out=[];const d=parse(s.date);
   if(n>=3&&tierOf(s.n||0)===0)out.push(['flame',n+'-week streak','#ff8a4c']);
   return out}
 let tvTimer=null;
+let tvPets=null;
 async function tvLoad(){
   if(!tvData)app.innerHTML='<div class="tv"><h1 style="color:#f4eee7">Loading today’s schedule…</h1></div>';
-  try{tvData=await q(sb.rpc('tv_board',{day:iso(new Date())}));tv()}
+  try{tvData=await q(sb.rpc('tv_board',{day:iso(new Date())}));
+    const dk=iso(new Date());if(!tvPets||tvPets.day!==dk||Date.now()-tvPets.at>600000){try{tvPets={day:dk,at:Date.now(),list:await q(sb.rpc('tv_pets',{day:dk}))||[]}}catch(e){console.error(e);tvPets=tvPets||{day:dk,at:Date.now(),list:[]}}}
+    tv()}
   catch(e){console.error(e);if(!tvData)app.innerHTML='<div class="tv"><h1 style="color:#f4eee7">Can’t reach the schedule right now. Retrying…</h1></div>'}
   clearTimeout(tvTimer);tvTimer=setTimeout(()=>{if(location.hash==='#tv')tvLoad()},60000);
 }
@@ -378,7 +387,9 @@ function tv(){
   const cnt={};today.forEach(s=>cnt[s.trainer]=(cnt[s.trainer]||0)+1);
   const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]||TR(a[0]).name.localeCompare(TR(b[0]).name)).slice(0,3);
   const lead=`<div class="tvtop"><h2>Top trainers today<small>Most sessions on the schedule</small></h2>${top.map(([id,n],i)=>`<div class="ldr ${i?'':'gold'}" style="--m:${['#f0c04a','#cfd3d8','#d98b4e'][i]}"><div class="medal">${i?'':'<svg class="crown" viewBox="0 0 24 16"><path d="M2 14 0 3l6 4 6-7 6 7 6-4-2 11z"/></svg>'}${i+1}</div><b>${i?'':'<small>TOP TRAINER</small>'}${esc(TR(id).name)}</b><div class="n">${n}</div></div>`).join('')}</div>`;
-  const spot=spotHTML(spotFacts(groups.slice(0,2).flatMap(g=>g.list).map(x=>x.name?{name:x.name,tr:TR(x.trainer).name,n:x.n||0,st:streakN(x),isNew:isNewOn(x),bday:!!(x.bday&&x.bday===x.date.slice(5))}:{})),D.pet);
+  const pets=[];{const seen=new Set();groups.slice(0,2).flatMap(g=>g.list).forEach(x=>{const p=(tvPets&&tvPets.list||[]).find(p=>p.date===x.date&&p.hour===x.hour&&p.trainer===x.trainer);
+    if(!p||!x.name)return;const k=p.pet+'|'+p.owner;if(seen.has(k))return;seen.add(k);const o={name:p.pet,type:p.type,photo:p.photo,owner:p.owner};if(petOK(o))pets.push(o)})}
+  const spot=mascotHTML(pets);
   app.innerHTML=`<div class="tv"><div class="tvh"><div class="logo" style="color:#f4eee7"><i>M</i><div>THE METHOD<small style="color:#b9aea2">Durham</small></div></div><h1>Today at The Method</h1>
   <div class="tot"><div><b>${D.month_total}</b>sessions this month</div><div><b>${today.length}</b>sessions today</div></div>
   <div class="clock"><b>${now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</b><span>${now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</span></div></div>
@@ -418,7 +429,6 @@ app.addEventListener('click',e=>{
   if(a==='d-1'||a==='d1'){V.day=iso(addDays(parse(V.day),a==='d1'?1:-1));return ensureRange(parse(V.day)).then(render)}
   if(a==='d0'){V.day=iso(new Date());return render()}
   if(a==='toggle'){const c=C(d.c);return act(()=>q(sb.from('clients').update({active:!c.active}).eq('id',c.id)))}
-  if(a==='petclear')return act(()=>q(sb.from('settings').upsert({key:'pet',value:null})),'Pet of the week removed');
   if(a==='remove'){const t=T(d.t);if(!b.dataset.sure){b.dataset.sure=1;b.textContent='Tap again: clients go to Unassigned';return}
     return act(async()=>{await q(sb.from('clients').update({trainer_id:null}).eq('trainer_id',t.id));await q(sb.from('trainers').update({active:false}).eq('id',t.id))},'Trainer removed')}
   if(a==='savehours'){const t=T(me());const hrs={};[0,1,2,3,4,5,6].forEach(x=>{const on=document.getElementById('hd'+x).checked,s=+document.getElementById('hs'+x).value,en=+document.getElementById('he'+x).value;hrs[x]=on&&en>s?[s,en]:null});
@@ -426,9 +436,6 @@ app.addEventListener('click',e=>{
   if(a==='exittv'){location.hash='';return}
 });
 app.addEventListener('submit',async e=>{e.preventDefault();const f=e.target;const val=id=>(document.getElementById(id)?.value||'').trim();
-  if(f.id==='petf'){const m=document.getElementById('pm');let ph;try{ph=await petPhoto(document.getElementById('pp').files[0])}catch(err){m.textContent=err.message;return}
-    const photo=ph||(S.pet&&S.pet.photo);if(!val('pn')||!photo){m.textContent='Add a name and a photo.';return}
-    return act(()=>q(sb.from('settings').upsert({key:'pet',value:{name:val('pn'),breed:val('pb'),owner:val('po'),photo}})),'Pet of the week saved')}
   if(f.id==='af'){
     authErr='';authMsg='';f.classList.add('busy');
     try{
