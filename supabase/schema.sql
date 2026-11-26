@@ -65,7 +65,7 @@ create table if not exists settings (
   value jsonb
 );
 insert into settings(key,value) values ('tv_names','"first"') on conflict do nothing;
-insert into settings(key,value) values ('spotlight','null') on conflict do nothing;
+insert into settings(key,value) values ('pet','null') on conflict do nothing;
 
 -- ---------- Helpers ----------
 create or replace function is_admin() returns boolean language sql stable security definer set search_path=public as
@@ -157,9 +157,7 @@ create or replace function tv_board(day date) returns jsonb language sql stable 
         'weeks',(select array_agg(distinct (x.date - ((extract(dow from x.date)::int+1)%7))) from sessions x where x.client_id=c.id and x.date>day-120 and x.date<=s.date)
       ) order by s.date,s.hour),'[]') from s join clients c on c.id=s.client_id),
     'month_total',(select count(*) from sessions where date_trunc('month',date)=date_trunc('month',day) and date<=day),
-    'spotlight',(select case when value is null or value='null'::jsonb then null else jsonb_build_object(
-        'name',(select first_name||' '||left(last_name,1)||'.' from clients where id=(value->>'client')::uuid),
-        'note',value->>'note','by',value->>'by') end from settings where key='spotlight')
+    'pet',(select case when value is null or value='null'::jsonb then null else value end from settings where key='pet')
   ) $$;
 grant execute on function tv_board(date) to anon, authenticated;
 revoke execute on function checkin_inactive(uuid) from anon;

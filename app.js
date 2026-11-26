@@ -65,7 +65,7 @@ async function load(){
   S.checkins={[wk]:Object.fromEntries(ck.map(c=>[c.client_id,c.status]))};
   S.totals=Object.fromEntries(tot.map(r=>[r.id,r.total]));
   const set=Object.fromEntries(st.map(r=>[r.key,r.value]));
-  S.tvNames=set.tv_names||'first';S.spotlight=set.spotlight||null;
+  S.tvNames=set.tv_names||'first';S.pet=set.pet||null;
   const missing=[...new Set(S.sessions.map(s=>s.client))].filter(id=>!S.clients.some(c=>c.id===id));
   S.extra={};
   if(missing.length){const r=await q(sb.rpc('session_client_names',{ids:missing}));r.forEach(x=>S.extra[x.id]={name:x.name,trainer:x.trainer_id||''})}
@@ -209,6 +209,7 @@ function trainers(){
   <form class="form" id="tf"><input id="tn" placeholder="New trainer’s first name" required><button class="btn pri">Add trainer</button></form>
   <div class="ph" style="border-top:1px solid var(--ln)"><div><h2>Gym TV</h2><p>What the public screen shows for each session.</p></div><span class="sp"></span>
   <select id="tvn" style="padding:8px 12px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);font-size:15px">${[['first','Client first name only'],['full','Client full name'],['none','Trainer only, no client names']].map(([k,l])=>`<option value="${k}" ${S.tvNames===k?'selected':''}>${l}</option>`).join('')}</select><button class="btn" data-go="tv">Open TV display</button></div>
+  <form class="petform" id="petf">${petOK(S.pet)?`<img src="${esc(S.pet.photo)}" alt="">`:''}<b>Pet of the week</b><input type="text" id="pn" placeholder="Pet's name" value="${esc(S.pet?.name||'')}"><input type="text" id="pb" placeholder="Breed (optional)" value="${esc(S.pet?.breed||'')}"><input type="text" id="po" placeholder="Owner, e.g. Craig" value="${esc(S.pet?.owner||'')}"><input type="file" id="pp" accept="image/*"><button class="btn pri">Save pet</button>${S.pet?'<button class="btn" type="button" data-act="petclear">Remove</button>':''}<span id="pm" class="muted"></span></form>
   <p class="note">Badges on the TV are automatic: birthdays, 10th/25th/50th/100th sessions, “New member” for a client’s first two weeks, and streaks of 3+ weeks in a row (not shown for 100/200/300 Club members, since the club already shows their commitment). The corner box picks up to 4 highlights about clients in the Now and Next columns (birthdays, milestones, new members, close to a club, streaks) and rotates every 8 seconds. Nobody has to pick anything.</p></div>`;
 }
 
@@ -319,8 +320,11 @@ function spotFacts(items){const seen=new Set(),out=[];
   out.sort((a,b)=>b.s-a.s);const pick=[],labs=new Set();out.forEach(f=>{const t=f.lab.split(' ')[0];if(pick.length<4&&!labs.has(t)){pick.push(f);labs.add(t)}});
   out.forEach(f=>{if(pick.length<4&&!pick.includes(f))pick.push(f)});return pick.sort((a,b)=>b.s-a.s)}
 let spotI=0,spotTimer=null;
-function spotHTML(facts){if(!facts.length)return'<div></div>';spotI%=facts.length;
-  return`<div class="spot auto"><small class="sph">ON THE FLOOR RIGHT NOW</small>${facts.map((f,i)=>`<div class="spf ${i===spotI?'on':''}"><svg viewBox="0 0 24 24" style="fill:${f.col}">${ICON[f.ic]}</svg><div><small>${esc(f.lab.toUpperCase())}</small><b>${esc(f.name)}</b><p>${esc(f.line)}</p></div></div>`).join('')}${facts.length>1?`<div class="spd">${facts.map((f,i)=>`<i class="${i===spotI?'on':''}"></i>`).join('')}</div>`:''}</div>`}
+// Pet of the Week rotates in with the floor highlights (2nd slot). Photo must be an uploaded image (data:image/...).
+const petOK=p=>p&&p.name&&typeof p.photo==='string'&&/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/.test(p.photo);
+function spotHTML(facts,pet){facts=facts.slice();if(petOK(pet))facts.splice(Math.min(1,facts.length),0,{pet:1,name:pet.name,lab:'Pet of the week',line:[pet.breed,pet.owner?'owned by '+pet.owner:''].filter(Boolean).join(' · '),img:pet.photo});
+  if(!facts.length)return'<div></div>';spotI%=facts.length;
+  return`<div class="spot auto">${facts.map((f,i)=>`<div class="spf ${i===spotI?'on':''}"><small class="sph">${f.pet?'THE METHOD FAMILY':'ON THE FLOOR RIGHT NOW'}</small>${f.img?`<img class="petimg" src="${esc(f.img)}" alt="">`:`<svg viewBox="0 0 24 24" style="fill:${f.col}">${ICON[f.ic]}</svg>`}<div><small>${esc(f.lab.toUpperCase())}</small><b>${esc(f.name)}</b><p>${esc(f.line)}</p></div></div>`).join('')}${facts.length>1?`<div class="spd">${facts.map((f,i)=>`<i class="${i===spotI?'on':''}"></i>`).join('')}</div>`:''}</div>`}
 function spotRotate(){clearInterval(spotTimer);spotTimer=setInterval(()=>{const f=[...document.querySelectorAll('.spot .spf')],d=[...document.querySelectorAll('.spot .spd i')];if(f.length<2)return;
   spotI=(spotI+1)%f.length;f.forEach((x,i)=>x.classList.toggle('on',i===spotI));d.forEach((x,i)=>x.classList.toggle('on',i===spotI))},8000)}
 function tvBadges(s){const out=[];const d=parse(s.date);
@@ -355,6 +359,7 @@ const FIGK=['squat','press','pullup','pushup','swing','lunge','curl'];
 let FIGN=0;
 function figFor(key){let h=0;for(const ch of String(key))h=(h*31+ch.charCodeAt(0))>>>0;const k=FIGK[FIGN++%FIGK.length];
   return`<svg class="fig" viewBox="0 0 48 48" aria-hidden="true">${FIGS[k]('-'+((h>>4)%18)/10+'s')}</svg>`}
+function petPhoto(file){return new Promise((ok,no)=>{if(!file)return ok(null);if(!/^image\//.test(file.type))return no(new Error('Please pick a photo'));const r=new FileReader();r.onerror=()=>no(r.error);r.onload=()=>{const im=new Image();im.onerror=()=>no(new Error('Could not read that photo'));im.onload=()=>{const m=360,s=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.84))};im.src=r.result};r.readAsDataURL(file)})}
 function tv(){
   FIGN=new Date().getHours();
   const D=tvData;const TR=id=>D.trainers.find(t=>t.id===id)||{name:'',color:'#888'};
@@ -373,7 +378,7 @@ function tv(){
   const cnt={};today.forEach(s=>cnt[s.trainer]=(cnt[s.trainer]||0)+1);
   const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]||TR(a[0]).name.localeCompare(TR(b[0]).name)).slice(0,3);
   const lead=`<div class="tvtop"><h2>Top trainers today<small>Most sessions on the schedule</small></h2>${top.map(([id,n],i)=>`<div class="ldr ${i?'':'gold'}" style="--m:${['#f0c04a','#cfd3d8','#d98b4e'][i]}"><div class="medal">${i?'':'<svg class="crown" viewBox="0 0 24 16"><path d="M2 14 0 3l6 4 6-7 6 7 6-4-2 11z"/></svg>'}${i+1}</div><b>${i?'':'<small>TOP TRAINER</small>'}${esc(TR(id).name)}</b><div class="n">${n}</div></div>`).join('')}</div>`;
-  const spot=spotHTML(spotFacts(groups.slice(0,2).flatMap(g=>g.list).map(x=>x.name?{name:x.name,tr:TR(x.trainer).name,n:x.n||0,st:streakN(x),isNew:isNewOn(x),bday:!!(x.bday&&x.bday===x.date.slice(5))}:{})));
+  const spot=spotHTML(spotFacts(groups.slice(0,2).flatMap(g=>g.list).map(x=>x.name?{name:x.name,tr:TR(x.trainer).name,n:x.n||0,st:streakN(x),isNew:isNewOn(x),bday:!!(x.bday&&x.bday===x.date.slice(5))}:{})),D.pet);
   app.innerHTML=`<div class="tv"><div class="tvh"><div class="logo" style="color:#f4eee7"><i>M</i><div>THE METHOD<small style="color:#b9aea2">Durham</small></div></div><h1>Today at The Method</h1>
   <div class="tot"><div><b>${D.month_total}</b>sessions this month</div><div><b>${today.length}</b>sessions today</div></div>
   <div class="clock"><b>${now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</b><span>${now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</span></div></div>
@@ -413,6 +418,7 @@ app.addEventListener('click',e=>{
   if(a==='d-1'||a==='d1'){V.day=iso(addDays(parse(V.day),a==='d1'?1:-1));return ensureRange(parse(V.day)).then(render)}
   if(a==='d0'){V.day=iso(new Date());return render()}
   if(a==='toggle'){const c=C(d.c);return act(()=>q(sb.from('clients').update({active:!c.active}).eq('id',c.id)))}
+  if(a==='petclear')return act(()=>q(sb.from('settings').upsert({key:'pet',value:null})),'Pet of the week removed');
   if(a==='remove'){const t=T(d.t);if(!b.dataset.sure){b.dataset.sure=1;b.textContent='Tap again: clients go to Unassigned';return}
     return act(async()=>{await q(sb.from('clients').update({trainer_id:null}).eq('trainer_id',t.id));await q(sb.from('trainers').update({active:false}).eq('id',t.id))},'Trainer removed')}
   if(a==='savehours'){const t=T(me());const hrs={};[0,1,2,3,4,5,6].forEach(x=>{const on=document.getElementById('hd'+x).checked,s=+document.getElementById('hs'+x).value,en=+document.getElementById('he'+x).value;hrs[x]=on&&en>s?[s,en]:null});
@@ -420,6 +426,9 @@ app.addEventListener('click',e=>{
   if(a==='exittv'){location.hash='';return}
 });
 app.addEventListener('submit',async e=>{e.preventDefault();const f=e.target;const val=id=>(document.getElementById(id)?.value||'').trim();
+  if(f.id==='petf'){const m=document.getElementById('pm');let ph;try{ph=await petPhoto(document.getElementById('pp').files[0])}catch(err){m.textContent=err.message;return}
+    const photo=ph||(S.pet&&S.pet.photo);if(!val('pn')||!photo){m.textContent='Add a name and a photo.';return}
+    return act(()=>q(sb.from('settings').upsert({key:'pet',value:{name:val('pn'),breed:val('pb'),owner:val('po'),photo}})),'Pet of the week saved')}
   if(f.id==='af'){
     authErr='';authMsg='';f.classList.add('busy');
     try{
